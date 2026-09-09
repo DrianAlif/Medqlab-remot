@@ -1,0 +1,18 @@
+[
+  {
+    "id": "vpn-1",
+    "hospital": "RSUI",
+    "vpnType": "CiscoAnyconnect",
+    "username": "vendor.medqlab",
+    "password": "BIn!34y5",
+    "notes": ""
+  },
+  {
+    "id": "vpn-2",
+    "hospital": "PPKP",
+    "vpnType": "Forticlient",
+    "username": "tanya mangquk",
+    "password": "",
+    "notes": ""
+  }
+]

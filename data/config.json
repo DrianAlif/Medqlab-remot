@@ -1,0 +1,18 @@
+{
+  "rustdeskServers": [
+    {
+      "name": "BIZNET (Server Baru)",
+      "server": "103.125.181.20",
+      "key": "qEfoyMqK5hq4sgD3XTNXxM5UajNKjDbyoYwElYUFgss=",
+      "status": "active",
+      "note": "Pengganti server baru yang direkomendasikan"
+    },
+    {
+      "name": "Digital Ocean (Server Lama)",
+      "server": "188.166.222.59",
+      "key": "jYPX4oy5pNgjpUNjNHALElYULR+OGLR0Sw9Hi1k4M5Q=",
+      "status": "deprecated",
+      "note": "Akan dinonaktifkan segera"
+    }
+  ]
+}

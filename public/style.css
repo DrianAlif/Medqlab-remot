@@ -1,0 +1,27 @@
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #090d16;
+}
+::-webkit-scrollbar-thumb {
+  background: #1e293b;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #334155;
+}
+
+/* Tooltip animation & styling */
+.credential-pill {
+  transition: all 0.15s ease-in-out;
+}
+.credential-pill:hover {
+  filter: brightness(1.15);
+}
+
+.copy-btn:active {
+  transform: scale(0.92);
+}

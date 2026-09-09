@@ -1,0 +1,65 @@
+[
+  {
+    "id": "ip-1",
+    "hospital": "RSUD MUARA TEWEH",
+    "pcName": "PC Server",
+    "ip": "10.10.2.1",
+    "notes": ""
+  },
+  {
+    "id": "ip-2",
+    "hospital": "RSUD MUARA TEWEH",
+    "pcName": "PC SMI 1",
+    "ip": "10.10.2.2",
+    "notes": ""
+  },
+  {
+    "id": "ip-3",
+    "hospital": "RSUD MUARA TEWEH",
+    "pcName": "PC SMI 2",
+    "ip": "10.10.2.3",
+    "notes": ""
+  },
+  {
+    "id": "ip-4",
+    "hospital": "RSUD MUARA TEWEH",
+    "pcName": "PC Client",
+    "ip": "10.10.2.19",
+    "notes": ""
+  },
+  {
+    "id": "ip-5",
+    "hospital": "RSUD MUARA TEWEH",
+    "pcName": "Alat Mindray BC-720",
+    "ip": "10.10.2.5",
+    "notes": ""
+  },
+  {
+    "id": "ip-6",
+    "hospital": "RSUD MUARA TEWEH",
+    "pcName": "Alat Sysmex XN-550",
+    "ip": "10.10.2.6",
+    "notes": ""
+  },
+  {
+    "id": "ip-7",
+    "hospital": "RSUD MUARA TEWEH",
+    "pcName": "Alat TMS24 i",
+    "ip": "10.10.2.7",
+    "notes": ""
+  },
+  {
+    "id": "ip-8",
+    "hospital": "RSUD MUARA TEWEH",
+    "pcName": "Alat Mindray BS-430",
+    "ip": "10.10.2.8",
+    "notes": ""
+  },
+  {
+    "id": "ip-9",
+    "hospital": "RSUD MUARA TEWEH",
+    "pcName": "Alat Clinitec",
+    "ip": "10.10.2.18",
+    "notes": ""
+  }
+]

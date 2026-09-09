@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="id" class="h-full bg-slate-950 text-slate-100">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MEDQLAB - All Remote & Server Portal</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="/style.css">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#ecfdf5',
+              500: '#10b981',
+              600: '#059669',
+              700: '#047857'
+            }
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="h-full flex flex-col antialiased selection:bg-emerald-500 selection:text-white">
+
+  <!-- TOP NAVBAR -->
+  <header class="sticky top-0 z-30 border-b border-slate-800 bg-slate-900/90 backdrop-blur-md">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-500 to-teal-400 flex items-center justify-center shadow-lg shadow-emerald-500/20 text-slate-950 font-black text-xl tracking-tighter">
+          MQ
+        </div>
+        <div>
+          <div class="flex items-center space-x-2">
+            <h1 class="text-lg font-bold text-white tracking-wide">MEDQLAB</h1>
+            <span class="px-2 py-0.5 text-[10px] font-semibold tracking-wider uppercase bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 rounded-full">All-in-One Portal</span>
+          </div>
+          <p class="text-xs text-slate-400">Remote Client, Server, Database & Web App Manager</p>
+        </div>
+      </div>
+
+      <div class="flex items-center space-x-2 sm:space-x-3">
+        <!-- Rustdesk Server Config Button -->
+        <button id="btnOpenConfig" class="inline-flex items-center space-x-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-slate-700 bg-slate-800/80 hover:bg-slate-700 text-slate-200 transition shadow-sm">
+          <i class="fa-solid fa-server text-emerald-400"></i>
+          <span class="hidden sm:inline">Config Rustdesk</span>
+        </button>
+
+        <!-- Dynamic Add Button -->
+        <button id="btnDynamicAdd" class="inline-flex items-center space-x-2 px-4 py-2 text-xs font-bold uppercase tracking-wider rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 transition shadow-lg shadow-emerald-500/25 active:scale-95">
+          <i class="fa-solid fa-plus text-sm font-black"></i>
+          <span id="btnDynamicAddText">Tambah Site</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- TABS BAR -->
+    <div class="border-t border-slate-800/80 bg-slate-900/60 px-4 sm:px-6 lg:px-8">
+      <div class="max-w-7xl mx-auto flex space-x-1 sm:space-x-2 overflow-x-auto py-2 text-xs font-semibold">
+        <button class="nav-tab active flex items-center space-x-2 px-3.5 py-2 rounded-xl border border-transparent transition" data-tab="interfaces">
+          <i class="fa-solid fa-desktop text-emerald-400"></i>
+          <span>Interface Lab</span>
+          <span id="badgeInterfaces" class="ml-1 px-2 py-0.5 rounded-full text-[10px] bg-emerald-500/20 text-emerald-300">126</span>
+        </button>
+
+        <button class="nav-tab flex items-center space-x-2 px-3.5 py-2 rounded-xl text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 border border-transparent transition" data-tab="servers">
+          <i class="fa-solid fa-network-wired text-blue-400"></i>
+          <span>Server Utama & SSH</span>
+          <span id="badgeServers" class="ml-1 px-2 py-0.5 rounded-full text-[10px] bg-blue-500/20 text-blue-300">46</span>
+        </button>
+
+        <button class="nav-tab flex items-center space-x-2 px-3.5 py-2 rounded-xl text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 border border-transparent transition" data-tab="clients">
+          <i class="fa-solid fa-user-doctor text-amber-400"></i>
+          <span>PC Client & Dokter</span>
+          <span id="badgeClients" class="ml-1 px-2 py-0.5 rounded-full text-[10px] bg-amber-500/20 text-amber-300">102</span>
+        </button>
+
+        <button class="nav-tab flex items-center space-x-2 px-3.5 py-2 rounded-xl text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 border border-transparent transition" data-tab="apps">
+          <i class="fa-solid fa-globe text-cyan-400"></i>
+          <span>Aplikasi Web & DB</span>
+          <span id="badgeApps" class="ml-1 px-2 py-0.5 rounded-full text-[10px] bg-cyan-500/20 text-cyan-300">41</span>
+        </button>
+
+        <button class="nav-tab flex items-center space-x-2 px-3.5 py-2 rounded-xl text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 border border-transparent transition" data-tab="vpn_ip">
+          <i class="fa-solid fa-shield-halved text-purple-400"></i>
+          <span>VPN & IP RS</span>
+          <span id="badgeVpnIp" class="ml-1 px-2 py-0.5 rounded-full text-[10px] bg-purple-500/20 text-purple-300">11</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN CONTAINER -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+
+    <!-- SEARCH & CONTROLS TOOLBAR -->
+    <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-4 space-y-3">
+      <div class="flex flex-col sm:flex-row items-center gap-3">
+        <!-- Search Input -->
+        <div class="relative flex-1 w-full">
+          <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+            <i class="fa-solid fa-magnifying-glass text-sm"></i>
+          </div>
+          <input 
+            type="text" 
+            id="globalSearchInput" 
+            placeholder="Cari nama site, RS, IP, ID Rustdesk, Anydesk, URL web, atau SSH..." 
+            class="w-full pl-10 pr-10 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition"
+          />
+          <button id="btnClearSearch" class="hidden absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-white">
+            <i class="fa-solid fa-xmark text-sm"></i>
+          </button>
+        </div>
+
+        <!-- Filter container dynamically adapted to tab -->
+        <div id="tabFiltersContainer" class="flex items-center space-x-2 w-full sm:w-auto">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+
+      <div class="flex items-center justify-between text-xs text-slate-400 pt-1">
+        <div id="quickChipsContainer" class="flex items-center space-x-1.5 overflow-x-auto">
+          <!-- Populated by JS -->
+        </div>
+        <span id="tabCountText" class="text-emerald-400 font-semibold whitespace-nowrap ml-auto">-</span>
+      </div>
+    </div>
+
+    <!-- TAB CONTENT SECTIONS -->
+
+    <!-- 1. TAB: INTERFACES -->
+    <div id="tabContent_interfaces" class="tab-pane space-y-4">
+      <div class="bg-slate-900/70 border border-slate-800 rounded-xl overflow-hidden shadow-sm">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse text-xs">
+            <thead>
+              <tr class="border-b border-slate-800 bg-slate-900/90 text-slate-400 uppercase tracking-wider font-semibold">
+                <th class="py-3.5 px-4 w-64">Nama Site & RS</th>
+                <th class="py-3.5 px-4">Rustdesk</th>
+                <th class="py-3.5 px-4">AnyDesk</th>
+                <th class="py-3.5 px-4">TeamViewer</th>
+                <th class="py-3.5 px-4">IP Address & PC Login</th>
+                <th class="py-3.5 px-4">OS & Versi Service</th>
+                <th class="py-3.5 px-4 w-44">Catatan</th>
+                <th class="py-3.5 px-4 text-right w-24">Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="interfaceTableBody" class="divide-y divide-slate-800/60 font-mono"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. TAB: SERVERS -->
+    <div id="tabContent_servers" class="tab-pane hidden space-y-4">
+      <div class="bg-slate-900/70 border border-slate-800 rounded-xl overflow-hidden shadow-sm">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse text-xs">
+            <thead>
+              <tr class="border-b border-slate-800 bg-slate-900/90 text-slate-400 uppercase tracking-wider font-semibold">
+                <th class="py-3.5 px-4 w-64">Nama Server</th>
+                <th class="py-3.5 px-4">SSH Login / Command</th>
+                <th class="py-3.5 px-4">Password SSH</th>
+                <th class="py-3.5 px-4">Rustdesk ID & Pass</th>
+                <th class="py-3.5 px-4">AnyDesk & TV</th>
+                <th class="py-3.5 px-4 w-44">Catatan</th>
+                <th class="py-3.5 px-4 text-right w-24">Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="serverTableBody" class="divide-y divide-slate-800/60 font-mono"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. TAB: CLIENTS -->
+    <div id="tabContent_clients" class="tab-pane hidden space-y-4">
+      <div class="bg-slate-900/70 border border-slate-800 rounded-xl overflow-hidden shadow-sm">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse text-xs">
+            <thead>
+              <tr class="border-b border-slate-800 bg-slate-900/90 text-slate-400 uppercase tracking-wider font-semibold">
+                <th class="py-3.5 px-4 w-80">Nama PC & Rumah Sakit</th>
+                <th class="py-3.5 px-4">AnyDesk ID & Pass</th>
+                <th class="py-3.5 px-4">Rustdesk ID & Pass</th>
+                <th class="py-3.5 px-4">TeamViewer</th>
+                <th class="py-3.5 px-4">IP Address</th>
+                <th class="py-3.5 px-4 w-48">Keterangan</th>
+                <th class="py-3.5 px-4 text-right w-24">Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="clientTableBody" class="divide-y divide-slate-800/60 font-mono"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4. TAB: APPS & ADMINER -->
+    <div id="tabContent_apps" class="tab-pane hidden space-y-4">
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="appsCardsContainer"></div>
+    </div>
+
+    <!-- 5. TAB: VPN & IP RS -->
+    <div id="tabContent_vpn_ip" class="tab-pane hidden space-y-6">
+      <!-- Section VPN -->
+      <div class="space-y-3">
+        <div class="flex items-center justify-between">
+          <h3 class="text-sm font-bold text-white flex items-center space-x-2">
+            <i class="fa-solid fa-shield-halved text-purple-400"></i>
+            <span>Akun & Kredensial VPN Rumah Sakit</span>
+          </h3>
+          <button onclick="openAddVpnModal()" class="px-3 py-1.5 text-xs bg-purple-600 hover:bg-purple-500 text-white rounded-lg font-semibold transition">
+            + Tambah VPN
+          </button>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="vpnCardsContainer"></div>
+      </div>
+
+      <!-- Section IP Mapping -->
+      <div class="space-y-3 pt-2">
+        <div class="flex items-center justify-between">
+          <h3 class="text-sm font-bold text-white flex items-center space-x-2">
+            <i class="fa-solid fa-network-wired text-emerald-400"></i>
+            <span>Daftar Pemetaan IP Komputer Per RS</span>
+          </h3>
+          <button onclick="openAddIpModal()" class="px-3 py-1.5 text-xs bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg font-semibold transition">
+            + Tambah IP Mapping
+          </button>
+        </div>
+        <div class="bg-slate-900/70 border border-slate-800 rounded-xl overflow-hidden">
+          <table class="w-full text-left border-collapse text-xs">
+            <thead>
+              <tr class="border-b border-slate-800 bg-slate-900/90 text-slate-400 uppercase tracking-wider font-semibold">
+                <th class="py-3 px-4">Rumah Sakit</th>
+                <th class="py-3 px-4">Nama Komputer / Unit</th>
+                <th class="py-3 px-4">IP Address</th>
+                <th class="py-3 px-4">Catatan</th>
+                <th class="py-3 px-4 text-right">Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="ipTableBody" class="divide-y divide-slate-800/60 font-mono"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- EMPTY STATE -->
+    <div id="emptyState" class="hidden py-16 flex flex-col items-center justify-center text-center space-y-3">
+      <div class="w-16 h-16 rounded-full bg-slate-800 flex items-center justify-center text-slate-500 text-2xl">
+        <i class="fa-solid fa-magnifying-glass"></i>
+      </div>
+      <h3 class="text-base font-semibold text-slate-200">Tidak ada data yang sesuai pencarian</h3>
+      <p class="text-xs text-slate-400 max-w-sm">Coba ubah kata kunci pencarian untuk melihat data lainnya.</p>
+    </div>
+
+  </main>
+
+  <!-- MODAL: ADD / EDIT DYNAMIC -->
+  <div id="dynamicModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4 overflow-y-auto">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-2xl shadow-2xl overflow-hidden my-8">
+      <div class="px-6 py-4 border-b border-slate-800 flex items-center justify-between bg-slate-850">
+        <div class="flex items-center space-x-2">
+          <div class="w-7 h-7 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold text-sm">
+            <i id="dynamicModalIcon" class="fa-solid fa-plus"></i>
+          </div>
+          <h2 id="dynamicModalTitle" class="text-base font-bold text-white">Tambah Data</h2>
+        </div>
+        <button id="btnCloseDynamicModal" class="text-slate-400 hover:text-white text-lg">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <form id="dynamicForm" class="p-6 space-y-4 text-xs">
+        <input type="hidden" id="dynFormId">
+        <input type="hidden" id="dynFormType">
+
+        <!-- Form fields container dynamically filled -->
+        <div id="dynamicFormBody" class="space-y-4"></div>
+
+        <!-- Submit buttons -->
+        <div class="flex items-center justify-end space-x-3 pt-3 border-t border-slate-800">
+          <button type="button" id="btnCancelDynamicModal" class="px-4 py-2 rounded-xl text-slate-400 hover:text-white bg-slate-800 hover:bg-slate-700 transition">
+            Batal
+          </button>
+          <button type="submit" id="btnSaveDynamicModal" class="px-5 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold transition shadow-lg shadow-emerald-500/20">
+            Simpan
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- CONFIG MODAL (Rustdesk) -->
+  <div id="configModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-xl shadow-2xl overflow-hidden">
+      <div class="px-6 py-4 border-b border-slate-800 flex items-center justify-between bg-slate-850">
+        <div class="flex items-center space-x-2">
+          <i class="fa-solid fa-server text-emerald-400 text-lg"></i>
+          <h2 class="text-base font-bold text-white">Konfigurasi Relay & ID Server Rustdesk</h2>
+        </div>
+        <button id="btnCloseConfigModal" class="text-slate-400 hover:text-white text-lg"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="p-6 space-y-4 text-xs">
+        <div class="p-4 rounded-xl bg-emerald-950/30 border border-emerald-500/30 space-y-2">
+          <div class="flex items-center justify-between">
+            <span class="font-bold text-emerald-400 text-sm">BIZNET (Server Baru - Aktif)</span>
+            <span class="px-2 py-0.5 rounded text-[10px] bg-emerald-500/20 text-emerald-300 font-semibold border border-emerald-500/30">AKTIF</span>
+          </div>
+          <div class="space-y-1.5 pt-1">
+            <div class="flex items-center justify-between bg-slate-950/80 p-2 rounded-lg border border-slate-800">
+              <span class="text-slate-400">ID / Relay Server:</span>
+              <div class="flex items-center space-x-2 font-mono text-white">
+                <span>103.125.181.20</span>
+                <button onclick="copyToClipboard('103.125.181.20', 'Server Biznet')" class="text-emerald-400 hover:text-emerald-300"><i class="fa-regular fa-copy"></i></button>
+              </div>
+            </div>
+            <div class="flex items-center justify-between bg-slate-950/80 p-2 rounded-lg border border-slate-800">
+              <span class="text-slate-400">Public Key:</span>
+              <div class="flex items-center space-x-2 font-mono text-white">
+                <span class="truncate max-w-[220px]">qEfoyMqK5hq4sgD3XTNXxM5UajNKjDbyoYwElYUFgss=</span>
+                <button onclick="copyToClipboard('qEfoyMqK5hq4sgD3XTNXxM5UajNKjDbyoYwElYUFgss=', 'Key Biznet')" class="text-yellow-400 hover:text-yellow-300"><i class="fa-regular fa-copy"></i></button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="p-4 rounded-xl bg-slate-950/60 border border-slate-800 space-y-2">
+          <div class="flex items-center justify-between">
+            <span class="font-bold text-slate-400 text-sm">Digital Ocean (Server Lama)</span>
+            <span class="px-2 py-0.5 rounded text-[10px] bg-rose-500/20 text-rose-300 font-semibold border border-rose-500/30">MAU DIHAPUS</span>
+          </div>
+          <div class="space-y-1.5 pt-1">
+            <div class="flex items-center justify-between bg-slate-900/80 p-2 rounded-lg border border-slate-800">
+              <span class="text-slate-400">ID / Relay Server:</span>
+              <div class="flex items-center space-x-2 font-mono text-slate-300">
+                <span>188.166.222.59</span>
+                <button onclick="copyToClipboard('188.166.222.59', 'Server DO')" class="text-slate-400 hover:text-white"><i class="fa-regular fa-copy"></i></button>
+              </div>
+            </div>
+            <div class="flex items-center justify-between bg-slate-900/80 p-2 rounded-lg border border-slate-800">
+              <span class="text-slate-400">Public Key:</span>
+              <div class="flex items-center space-x-2 font-mono text-slate-300">
+                <span class="truncate max-w-[220px]">jYPX4oy5pNgjpUNjNHALElYULR+OGLR0Sw9Hi1k4M5Q=</span>
+                <button onclick="copyToClipboard('jYPX4oy5pNgjpUNjNHALElYULR+OGLR0Sw9Hi1k4M5Q=', 'Key DO')" class="text-yellow-400 hover:text-yellow-300"><i class="fa-regular fa-copy"></i></button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  
+  <!-- MODAL: VIEW NOTE -->
+  <div id="noteModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md shadow-2xl overflow-hidden">
+      <div class="px-5 py-3.5 border-b border-slate-800 flex items-center justify-between bg-slate-850">
+        <div class="flex items-center space-x-2">
+          <i class="fa-solid fa-note-sticky text-amber-400"></i>
+          <h3 id="noteModalTitle" class="text-sm font-bold text-white truncate max-w-[280px]">Catatan</h3>
+        </div>
+        <button onclick="document.getElementById('noteModal').classList.add('hidden')" class="text-slate-400 hover:text-white text-base"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="p-5 space-y-4 text-xs">
+        <div id="noteModalContent" class="p-3.5 rounded-xl bg-slate-950 border border-slate-800 text-slate-200 font-mono whitespace-pre-wrap leading-relaxed select-all"></div>
+        <div class="flex items-center justify-end space-x-2">
+          <button id="btnCopyNote" class="px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold transition inline-flex items-center space-x-1.5">
+            <i class="fa-regular fa-copy text-amber-400"></i>
+            <span>Salin Catatan</span>
+          </button>
+          <button onclick="document.getElementById('noteModal').classList.add('hidden')" class="px-4 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold transition">
+            Tutup
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOAST CONTAINER -->
+  <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col space-y-2 pointer-events-none"></div>
+
+  <script src="/app.js"></script>
+</body>
+</html>
