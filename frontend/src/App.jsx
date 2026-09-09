@@ -244,25 +244,19 @@ export default function App() {
       <Toaster position="top-right" richColors />
 
       {/* Sidebar for Desktop */}
-      <div className={`hidden md:block relative shrink-0 transition-all duration-300 ease-in-out ${sidebarCollapsed ? 'w-16' : 'w-64'}`}>
-        <Sidebar
-          activeTab={activeTab}
-          setActiveTab={(t) => {
-            setActiveTab(t);
-            setMobileSidebarOpen(false);
-          }}
-          counts={stats}
-          isCollapsed={sidebarCollapsed}
-          setIsCollapsed={setSidebarCollapsed}
-          isLocked={sidebarLocked}
-          setIsLocked={setSidebarLocked}
-          className={`h-screen sticky top-0 transition-all duration-300 ease-in-out ${
-            sidebarCollapsed
-              ? (!sidebarLocked ? 'hover:w-64 hover:shadow-2xl hover:z-50 w-16' : 'w-16')
-              : 'w-64'
-          }`}
-        />
-      </div>
+      <Sidebar
+        activeTab={activeTab}
+        setActiveTab={(t) => {
+          setActiveTab(t);
+          setMobileSidebarOpen(false);
+        }}
+        counts={stats}
+        isCollapsed={sidebarCollapsed}
+        setIsCollapsed={setSidebarCollapsed}
+        isLocked={sidebarLocked}
+        setIsLocked={setSidebarLocked}
+        className="hidden md:flex shrink-0 sticky top-0 h-screen"
+      />
 
       {/* Mobile Drawer Sidebar */}
       {mobileSidebarOpen && (
