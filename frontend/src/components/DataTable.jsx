@@ -54,24 +54,59 @@ export function DataTable({
     setRevealedPasswords((prev) => ({ ...prev, [key]: !prev[key] }));
   };
 
-  const handleLaunch = async (type, rawId, password) => {
+  const RUSTDESK_CONFIG = {
+    Biznet: {
+      server: '103.125.181.20',
+      key: 'qEfoyMqK5hq4sgD3XTNXxM5UajNKjDbyoYwElYUFgss=',
+    },
+    'Digital Ocean': {
+      server: '188.166.222.59',
+      key: 'jYPX4oy5pNgjpUNjNHALElYULR+OGLR0Sw9Hi1k4M5Q=',
+    },
+  };
+
+  const getRustdeskServer = (item) => {
+    if (!item) return null;
+    if (item.rustdeskServer === 'Biznet' || (item.notes && item.notes.includes('Server Biznet'))) {
+      return 'Biznet';
+    }
+    if (item.rustdeskServer === 'Digital Ocean' || (item.notes && item.notes.includes('Server Digital Ocean'))) {
+      return 'Digital Ocean';
+    }
+    return null;
+  };
+
+  const handleLaunch = async (type, rawId, password, item) => {
     if (!rawId) return;
     const cleanId = String(rawId).replace(/\s+/g, '');
     const appName = type === 'rustdesk' ? 'RustDesk' : 'AnyDesk';
+
+    let targetConnection = cleanId;
+    let serverLabel = '';
+
+    if (type === 'rustdesk' && item) {
+      const serverType = getRustdeskServer(item);
+      if (serverType && RUSTDESK_CONFIG[serverType]) {
+        const cfg = RUSTDESK_CONFIG[serverType];
+        // Format otomatis: <ID>@<SERVER>?key=<KEY>
+        targetConnection = `${cleanId}@${cfg.server}?key=${cfg.key}`;
+        serverLabel = ` [Server ${serverType}]`;
+      }
+    }
 
     // 1. Salin password secara otomatis ke clipboard jika ada
     if (password) {
       try {
         await navigator.clipboard.writeText(password);
         toast.success(
-          `Membuka ${appName} (${rawId}) — Password otomatis disalin ke clipboard!`,
+          `Membuka ${appName}${serverLabel} (${rawId}) — Password otomatis disalin ke clipboard!`,
           { duration: 4000 }
         );
       } catch (err) {
-        toast.info(`Membuka ${appName} (${rawId})...`);
+        toast.info(`Membuka ${appName}${serverLabel} (${rawId})...`);
       }
     } else {
-      toast.info(`Membuka ${appName} (${rawId})...`);
+      toast.info(`Membuka ${appName}${serverLabel} (${rawId})...`);
     }
 
     // 2. Kirim sinyal ke API backend lokal (start.bat / node server.js)
@@ -79,12 +114,12 @@ export function DataTable({
       fetch('/api/launch', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ type, id: cleanId, password }),
+        body: JSON.stringify({ type, id: targetConnection, rawId: cleanId, password }),
       }).catch(() => {});
     } catch (e) {}
 
     // 3. Panggil Browser Protocol Scheme (Deep Link)
-    const uri = type === 'rustdesk' ? `rustdesk://${cleanId}` : `anydesk:${cleanId}`;
+    const uri = type === 'rustdesk' ? `rustdesk://${targetConnection}` : `anydesk:${cleanId}`;
     const link = document.createElement('a');
     link.href = uri;
     link.style.display = 'none';
@@ -103,17 +138,6 @@ export function DataTable({
   const getVersionBadge = (ver) => {
     if (!ver) return null;
     return <Badge variant="secondary" className="font-mono text-[10px] font-normal">{ver}</Badge>;
-  };
-
-  const RUSTDESK_CONFIG = {
-    Biznet: {
-      server: '103.125.181.20',
-      key: 'qEfoyMqK5hq4sgD3XTNXxM5UajNKjDbyoYwElYUFgss=',
-    },
-    'Digital Ocean': {
-      server: '188.166.222.59',
-      key: 'jYPX4oy5pNgjpUNjNHALElYULR+OGLR0Sw9Hi1k4M5Q=',
-    },
   };
 
   const copyRustdeskFullString = (e, item, serverType) => {
@@ -262,7 +286,7 @@ export function DataTable({
                                 size="sm"
                                 className="h-6 px-1.5 text-[10px] font-medium gap-1 text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/60 hover:bg-blue-100 dark:hover:bg-blue-900 border border-blue-200 dark:border-blue-800 shadow-none"
                                 title="Buka langsung di aplikasi RustDesk (Password otomatis disalin)"
-                                onClick={() => handleLaunch('rustdesk', site.rustdeskId, site.rustdeskPass)}
+                                onClick={() => handleLaunch('rustdesk', site.rustdeskId, site.rustdeskPass, site)}
                               >
                                 <ExternalLink className="h-3 w-3" />
                                 Buka
@@ -499,7 +523,7 @@ export function DataTable({
                                 size="sm"
                                 className="h-6 px-1.5 text-[10px] font-medium gap-1 text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/60 hover:bg-blue-100 dark:hover:bg-blue-900 border border-blue-200 dark:border-blue-800 shadow-none"
                                 title="Buka langsung di aplikasi RustDesk (Password otomatis disalin)"
-                                onClick={() => handleLaunch('rustdesk', srv.rustdeskId, srv.rustdeskPass)}
+                                onClick={() => handleLaunch('rustdesk', srv.rustdeskId, srv.rustdeskPass, srv)}
                               >
                                 <ExternalLink className="h-3 w-3" />
                                 Buka
@@ -718,7 +742,7 @@ export function DataTable({
                                 size="sm"
                                 className="h-6 px-1.5 text-[10px] font-medium gap-1 text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/60 hover:bg-blue-100 dark:hover:bg-blue-900 border border-blue-200 dark:border-blue-800 shadow-none"
                                 title="Buka langsung di aplikasi RustDesk (Password otomatis disalin)"
-                                onClick={() => handleLaunch('rustdesk', cli.rustdeskId, cli.rustdeskPass, cli.rustdeskServer)}
+                                onClick={() => handleLaunch('rustdesk', cli.rustdeskId, cli.rustdeskPass, cli)}
                               >
                                 <ExternalLink className="h-3 w-3" />
                                 Buka

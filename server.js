@@ -459,15 +459,13 @@ app.post('/api/launch', (req, res) => {
   const { exec } = require('child_process');
 
   if (type === 'rustdesk') {
-    const localRustDesk = path.join(process.env.LOCALAPPDATA || '', 'rustdesk', 'rustdesk.exe');
-    const cmd = fs.existsSync(localRustDesk)
-      ? `start "" "${localRustDesk}" --connect ${cleanId}`
-      : `start rustdesk://${cleanId}`;
+    const uri = cleanId.startsWith('rustdesk://') ? cleanId : `rustdesk://${cleanId}`;
+    const cmd = `start "" "${uri}"`;
 
     exec(cmd, (err) => {
       if (err) console.error('Gagal menjalankan RustDesk:', err);
     });
-    return res.json({ success: true, message: `RustDesk diluncurkan untuk ID ${id}` });
+    return res.json({ success: true, message: `RustDesk diluncurkan untuk target ${id}` });
   }
 
   if (type === 'anydesk') {
