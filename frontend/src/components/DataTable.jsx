@@ -61,6 +61,7 @@ export function DataTable({
   onQuickSwitchServer,
 }) {
   const [revealedPasswords, setRevealedPasswords] = useState({});
+  const [globalCategoryFilter, setGlobalCategoryFilter] = useState('all');
 
   const togglePass = (key) => {
     setRevealedPasswords((prev) => ({ ...prev, [key]: !prev[key] }));
@@ -337,17 +338,61 @@ export function DataTable({
     );
   };
 
+  const displayedGlobalItems = activeTab === 'global'
+    ? (globalCategoryFilter === 'all' ? items : items.filter((i) => i._category === globalCategoryFilter))
+    : items;
+
   return (
     <>
       <Card className="shadow-sm border-border bg-card">
       <CardHeader className="flex flex-row items-center justify-between p-4 pb-2 lg:p-6 lg:pb-3">
         <div>
-          <CardTitle className="text-base font-semibold">Daftar Data</CardTitle>
+          <CardTitle className="text-base font-semibold">
+            {activeTab === 'global' ? 'Hasil Pencarian Global' : 'Daftar Data'}
+          </CardTitle>
           <CardDescription className="text-xs">
-            Menampilkan {items.length} dari {totalCount} data
+            Menampilkan {activeTab === 'global' ? displayedGlobalItems.length : items.length} dari {totalCount} data
           </CardDescription>
         </div>
       </CardHeader>
+
+      {/* Category Filter Pills for Global Search View */}
+      {activeTab === 'global' && items.length > 0 && (
+        <div className="flex items-center gap-1.5 flex-wrap px-4 py-2.5 border-b border-border bg-muted/20">
+          <span className="text-xs font-semibold text-muted-foreground mr-1">Filter Kategori:</span>
+          <Button
+            type="button"
+            variant={globalCategoryFilter === 'all' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setGlobalCategoryFilter('all')}
+            className="h-7 text-xs rounded-full px-3 cursor-pointer"
+          >
+            Semua ({items.length})
+          </Button>
+          {[
+            { id: 'interfaces', label: 'Interface Lab' },
+            { id: 'servers', label: 'Server Utama' },
+            { id: 'clients', label: 'PC Client' },
+            { id: 'apps', label: 'Web & DB' },
+            { id: 'vpn_ip', label: 'VPN / IP' },
+          ].map((cat) => {
+            const count = items.filter((i) => i._category === cat.id).length;
+            if (count === 0) return null;
+            return (
+              <Button
+                key={cat.id}
+                type="button"
+                variant={globalCategoryFilter === cat.id ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setGlobalCategoryFilter(cat.id)}
+                className="h-7 text-xs rounded-full px-3 cursor-pointer"
+              >
+                {cat.label} ({count})
+              </Button>
+            );
+          })}
+        </div>
+      )}
 
       <CardContent className="p-0">
         {items.length === 0 ? (
@@ -356,6 +401,268 @@ export function DataTable({
           </div>
         ) : (
           <div className="overflow-x-auto">
+            {/* 0. GLOBAL SEARCH RESULTS TABLE (OPSI 1) */}
+            {activeTab === 'global' && (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-64">Kategori & Nama / Site</TableHead>
+                    <TableHead>Rustdesk ID & Pass</TableHead>
+                    <TableHead>AnyDesk ID & Pass</TableHead>
+                    <TableHead>IP / SSH / URL</TableHead>
+                    <TableHead>Info & Detail</TableHead>
+                    <TableHead className="text-center w-20">Catatan</TableHead>
+                    <TableHead className="text-right w-16">Aksi</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {displayedGlobalItems.map((item) => (
+                    <TableRow key={item.id + '_' + (item._category || '')}>
+                      {/* 1. Kategori & Nama / Site */}
+                      <TableCell>
+                        <div className="flex items-center gap-1.5 mb-1">
+                          {item._category === 'interfaces' && (
+                            <Badge variant="outline" className="bg-blue-50 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300 border-blue-300 dark:border-blue-800 text-[10px]">
+                              Interface Lab
+                            </Badge>
+                          )}
+                          {item._category === 'servers' && (
+                            <Badge variant="outline" className="bg-amber-50 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300 border-amber-300 dark:border-amber-800 text-[10px]">
+                              Server Utama
+                            </Badge>
+                          )}
+                          {item._category === 'clients' && (
+                            <Badge variant="outline" className="bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800 text-[10px]">
+                              PC Client
+                            </Badge>
+                          )}
+                          {item._category === 'apps' && (
+                            <Badge variant="outline" className="bg-purple-50 text-purple-700 dark:bg-purple-950/50 dark:text-purple-300 border-purple-300 dark:border-purple-800 text-[10px]">
+                              Web & DB
+                            </Badge>
+                          )}
+                          {item._category === 'vpn_ip' && (
+                            <Badge variant="outline" className="bg-cyan-50 text-cyan-700 dark:bg-cyan-950/50 dark:text-cyan-300 border-cyan-300 dark:border-cyan-800 text-[10px]">
+                              {item._type === 'vpn' ? 'VPN' : 'IP RS'}
+                            </Badge>
+                          )}
+                        </div>
+                        <div className="font-semibold text-foreground text-xs">
+                          {item.name || item.site || item.app || item.router || item.user || 'Item'}
+                        </div>
+                        <div className="text-[11px] text-muted-foreground">
+                          {item.hospital ? `🏥 ${item.hospital}` : item.unit || item.doctor ? `🩺 ${item.unit || item.doctor}` : '-'}
+                        </div>
+                      </TableCell>
+
+                      {/* 2. Rustdesk ID & Pass */}
+                      <TableCell>
+                        {item.rustdeskId ? (
+                          <div className="flex flex-col gap-1.5 py-0.5">
+                            <div className="flex items-center gap-1.5">
+                              <span className="font-mono text-sm font-bold tracking-wide text-foreground">
+                                {item.rustdeskId}
+                              </span>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-6 w-6 text-muted-foreground hover:text-foreground"
+                                title="Salin ID"
+                                onClick={() => onCopy(item.rustdeskId, 'Rustdesk ID')}
+                              >
+                                <Copy className="h-3.5 w-3.5" />
+                              </Button>
+                              <Button
+                                variant="secondary"
+                                size="sm"
+                                className="h-6 px-1.5 text-[10px] font-medium gap-1 text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/60 hover:bg-blue-100 dark:hover:bg-blue-900 border border-blue-200 dark:border-blue-800 shadow-none cursor-pointer"
+                                title="Buka langsung di aplikasi RustDesk (Password otomatis disalin)"
+                                onClick={() => handleLaunch('rustdesk', item.rustdeskId, item.rustdeskPass, item)}
+                              >
+                                <ExternalLink className="h-3 w-3" />
+                                Buka
+                              </Button>
+                            </div>
+                            {item.rustdeskPass && (
+                              <div className="flex items-center gap-1.5 text-xs">
+                                <span className="text-[11px] text-muted-foreground font-sans">Pass:</span>
+                                <span className="font-mono font-medium text-foreground tracking-wider text-xs">
+                                  {revealedPasswords['rd_' + item.id] ? item.rustdeskPass : '••••••••'}
+                                </span>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-5 w-5 text-muted-foreground hover:text-foreground cursor-pointer"
+                                  onClick={() => togglePass('rd_' + item.id)}
+                                >
+                                  {revealedPasswords['rd_' + item.id] ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-5 w-5 text-muted-foreground hover:text-foreground cursor-pointer"
+                                  title="Salin Password"
+                                  onClick={() => onCopy(item.rustdeskPass, 'Password')}
+                                >
+                                  <Copy className="h-3 w-3" />
+                                </Button>
+                              </div>
+                            )}
+                            {getRustdeskServerBadge(item)}
+                          </div>
+                        ) : (
+                          <span className="text-muted-foreground/50 text-xs">-</span>
+                        )}
+                      </TableCell>
+
+                      {/* 3. AnyDesk ID & Pass */}
+                      <TableCell>
+                        {item.anydeskId ? (
+                          <div className="flex flex-col gap-1.5 py-0.5">
+                            <div className="flex items-center gap-1.5">
+                              <span className="font-mono text-sm font-bold tracking-wide text-foreground">
+                                {item.anydeskId}
+                              </span>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-6 w-6 text-muted-foreground hover:text-foreground"
+                                title="Salin AnyDesk ID"
+                                onClick={() => onCopy(item.anydeskId, 'AnyDesk ID')}
+                              >
+                                <Copy className="h-3.5 w-3.5" />
+                              </Button>
+                              <Button
+                                variant="secondary"
+                                size="sm"
+                                className="h-6 px-1.5 text-[10px] font-medium gap-1 text-red-700 dark:text-red-300 bg-red-50 dark:bg-red-950/60 hover:bg-red-100 dark:hover:bg-red-900 border border-red-200 dark:border-red-800 shadow-none cursor-pointer"
+                                title="Buka langsung di aplikasi AnyDesk (Password otomatis disalin)"
+                                onClick={() => handleLaunch('anydesk', item.anydeskId, item.anydeskPass, item)}
+                              >
+                                <ExternalLink className="h-3 w-3" />
+                                Buka
+                              </Button>
+                            </div>
+                            {item.anydeskPass && (
+                              <div className="flex items-center gap-1.5 text-xs">
+                                <span className="text-[11px] text-muted-foreground font-sans">Pass:</span>
+                                <span className="font-mono font-medium text-foreground tracking-wider text-xs">
+                                  {revealedPasswords['ad_' + item.id] ? item.anydeskPass : '••••••••'}
+                                </span>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-5 w-5 text-muted-foreground hover:text-foreground cursor-pointer"
+                                  onClick={() => togglePass('ad_' + item.id)}
+                                >
+                                  {revealedPasswords['ad_' + item.id] ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-5 w-5 text-muted-foreground hover:text-foreground cursor-pointer"
+                                  title="Salin Password"
+                                  onClick={() => onCopy(item.anydeskPass, 'Password')}
+                                >
+                                  <Copy className="h-3 w-3" />
+                                </Button>
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                          <span className="text-muted-foreground/50 text-xs">-</span>
+                        )}
+                      </TableCell>
+
+                      {/* 4. IP / SSH / URL */}
+                      <TableCell>
+                        {item.ip && (
+                          <div
+                            onClick={() => onCopy(item.ip, 'IP Address')}
+                            className="cursor-pointer font-mono text-xs text-foreground hover:underline"
+                          >
+                            IP: {item.ip}
+                          </div>
+                        )}
+                        {item.sshPort && (
+                          <div className="font-mono text-[11px] text-muted-foreground">
+                            SSH: {item.sshPort}
+                          </div>
+                        )}
+                        {item.url && (
+                          <a
+                            href={item.url.startsWith('http') ? item.url : `http://${item.url}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-xs text-blue-600 hover:underline flex items-center gap-1"
+                          >
+                            <Globe className="h-3 w-3" /> {item.url}
+                          </a>
+                        )}
+                        {item.host && !item.ip && (
+                          <div className="font-mono text-xs text-foreground">{item.host}</div>
+                        )}
+                        {!item.ip && !item.sshPort && !item.url && !item.host && (
+                          <span className="text-muted-foreground/40 text-xs">-</span>
+                        )}
+                      </TableCell>
+
+                      {/* 5. Info / OS / Detail */}
+                      <TableCell>
+                        <div className="flex flex-col gap-1 items-start">
+                          {getOsBadge(item.os)}
+                          {getVersionBadge(item.version)}
+                          {item.dbName && (
+                            <Badge variant="outline" className="font-mono text-[10px]">
+                              DB: {item.dbName}
+                            </Badge>
+                          )}
+                          {item.doctor && (
+                            <span className="text-[11px] text-muted-foreground">
+                              Dr: {item.doctor}
+                            </span>
+                          )}
+                          {item.username && (
+                            <span className="text-[11px] font-mono text-muted-foreground">
+                              User: {item.username}
+                            </span>
+                          )}
+                        </div>
+                      </TableCell>
+
+                      {/* 6. Catatan */}
+                      <TableCell className="text-center">
+                        {renderNoteIcon(item.name || 'Detail', item.notes, item)}
+                      </TableCell>
+
+                      {/* 7. Aksi */}
+                      <TableCell className="text-right">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 cursor-pointer">
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => onEdit(item, item._category)}>
+                              <Pencil className="mr-2 h-3.5 w-3.5" /> Edit Data
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              onClick={() => onDelete(item.id, item.name || 'Data', item._category)}
+                              className="text-destructive focus:text-destructive cursor-pointer"
+                            >
+                              <Trash2 className="mr-2 h-3.5 w-3.5" /> Hapus Data
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
+
             {/* 1. INTERFACES TABLE */}
             {activeTab === 'interfaces' && (
               <Table>

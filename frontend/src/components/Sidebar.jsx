@@ -9,7 +9,8 @@ import {
   ChevronsLeft,
   ChevronsRight,
   Lock,
-  Unlock
+  Unlock,
+  Search
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -25,6 +26,17 @@ export function Sidebar({
   isMobile = false
 }) {
   const menuItems = [
+    ...(counts.global !== undefined || activeTab === 'global'
+      ? [
+          {
+            id: 'global',
+            label: 'Semua Hasil Global',
+            icon: Search,
+            count: counts.global ?? 0,
+            isSpecial: true,
+          },
+        ]
+      : []),
     {
       id: 'interfaces',
       label: 'Interface Lab',

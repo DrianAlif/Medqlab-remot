@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Sidebar } from '@/components/Sidebar';
 import { Header } from '@/components/Header';
 import { KpiCards } from '@/components/KpiCards';
@@ -77,6 +77,13 @@ export default function App() {
     }
   }, [isDarkMode]);
 
+  // Reset activeTab from global back to interfaces when search is cleared
+  useEffect(() => {
+    if (activeTab === 'global' && !searchQuery.trim()) {
+      setActiveTab('interfaces');
+    }
+  }, [activeTab, searchQuery]);
+
   // Dialog states
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
@@ -140,16 +147,17 @@ export default function App() {
     setNoteDialog({ open: true, title, note });
   };
 
-  const handleEdit = (item) => {
-    setEditingItem(item);
+  const handleEdit = (item, categoryOverride) => {
+    setEditingItem({ ...item, _category: categoryOverride || item._category || activeTab });
     setAddModalOpen(true);
   };
 
-  const handleDelete = async (id, name) => {
+  const handleDelete = async (id, name, categoryOverride) => {
     if (!confirm(`Apakah Anda yakin ingin menghapus "${name}"?`)) return;
 
-    let endpoint = `/api/${activeTab}/${id}`;
-    if (activeTab === 'vpn_ip') {
+    const tabToUse = categoryOverride || activeTab;
+    let endpoint = `/api/${tabToUse}/${id}`;
+    if (tabToUse === 'vpn_ip') {
       endpoint = id.startsWith('vpn-') ? `/api/vpns/${id}` : `/api/ips/${id}`;
     }
 
@@ -165,6 +173,68 @@ export default function App() {
     } catch (err) {
       toast.error('Terjadi kesalahan jaringan');
     }
+  };
+
+  const handleLaunchRemote = async (type, rawId, password, item) => {
+    if (!rawId) return;
+    const cleanId = String(rawId).replace(/\s+/g, '');
+    const appName = type === 'rustdesk' ? 'RustDesk' : 'AnyDesk';
+
+    let targetConnection = cleanId;
+    let serverLabel = '';
+
+    const RUSTDESK_CONFIG = {
+      Biznet: {
+        server: '103.125.181.20',
+        key: 'qEfoyMqK5hq4sgD3XTNXxM5UajNKjDbyoYwElYUFgss=',
+      },
+      'Digital Ocean': {
+        server: '188.166.222.59',
+        key: 'jYPX4oy5pNgjpUNjNHALElYULR+OGLR0Sw9Hi1k4M5Q=',
+      },
+    };
+
+    if (type === 'rustdesk' && item) {
+      let serverType = item.rustdeskServer;
+      if (!serverType && item.notes) {
+        if (item.notes.includes('Server Biznet')) serverType = 'Biznet';
+        else if (item.notes.includes('Server Digital Ocean')) serverType = 'Digital Ocean';
+      }
+      if (serverType && RUSTDESK_CONFIG[serverType]) {
+        const cfg = RUSTDESK_CONFIG[serverType];
+        targetConnection = `${cleanId}@${cfg.server}?key=${cfg.key}`;
+        serverLabel = ` [Server ${serverType}]`;
+      }
+    }
+
+    if (password) {
+      try {
+        await navigator.clipboard.writeText(password);
+        toast.success(`Membuka ${appName}${serverLabel} (${rawId}) — Password otomatis disalin ke clipboard!`, { duration: 4000 });
+      } catch (err) {
+        toast.info(`Membuka ${appName}${serverLabel} (${rawId})...`);
+      }
+    } else {
+      toast.info(`Membuka ${appName}${serverLabel} (${rawId})...`);
+    }
+
+    try {
+      fetch('/api/launch', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type, id: targetConnection, rawId: cleanId, password }),
+      }).catch(() => {});
+    } catch (e) {}
+
+    const uri = type === 'rustdesk' ? `rustdesk://${targetConnection}` : `anydesk:${cleanId}`;
+    const link = document.createElement('a');
+    link.href = uri;
+    link.style.display = 'none';
+    document.body.appendChild(link);
+    link.click();
+    setTimeout(() => {
+      if (link.parentNode) link.parentNode.removeChild(link);
+    }, 1000);
   };
 
   const handleSaveData = async (tab, formData, itemId) => {
@@ -202,8 +272,82 @@ export default function App() {
     }
   };
 
-  // Filter items based on searchQuery
+  const matchesSearch = (item, q) => {
+    if (!q) return true;
+    const qLower = q.toLowerCase().trim();
+    const fields = [
+      item.name,
+      item.hospital,
+      item.host,
+      item.ip,
+      item.sshPort,
+      item.rustdeskId,
+      item.anydeskId,
+      item.user,
+      item.username,
+      item.notes,
+      item.url,
+      item.dbName,
+      item.os,
+      item.service,
+      item.doctor,
+      item.unit,
+      item.site,
+      item.router,
+    ];
+    return fields.some((f) => f && String(f).toLowerCase().includes(qLower));
+  };
+
+  const globalResults = useMemo(() => {
+    if (!searchQuery.trim()) return { all: [], byCategory: {}, total: 0 };
+    const q = searchQuery.toLowerCase().trim();
+
+    const filterList = (list, categoryKey, categoryLabel) =>
+      (list || [])
+        .filter((item) => matchesSearch(item, q))
+        .map((item) => ({ ...item, _category: categoryKey, _categoryLabel: categoryLabel }));
+
+    const ifaces = filterList(data.interfaces, 'interfaces', 'Interface Lab');
+    const srvs = filterList(data.servers, 'servers', 'Server Utama & SSH');
+    const cls = filterList(data.clients, 'clients', 'PC Client & Dokter');
+    const apps = filterList(data.apps, 'apps', 'Aplikasi Web & DB');
+    const vpns = filterList(data.vpns.map((v) => ({ ...v, _type: 'vpn' })), 'vpn_ip', 'VPN & Pemetaan IP');
+    const ips = filterList(data.ips.map((i) => ({ ...i, _type: 'ip' })), 'vpn_ip', 'VPN & Pemetaan IP');
+
+    const allVpnIp = [...vpns, ...ips];
+    const all = [...ifaces, ...srvs, ...cls, ...apps, ...allVpnIp];
+
+    return {
+      all,
+      byCategory: {
+        interfaces: ifaces,
+        servers: srvs,
+        clients: cls,
+        apps: apps,
+        vpn_ip: allVpnIp,
+      },
+      total: all.length,
+    };
+  }, [data, searchQuery]);
+
+  const sidebarCounts = useMemo(() => {
+    if (!searchQuery.trim()) return stats;
+    return {
+      interfaces: globalResults.byCategory.interfaces?.length || 0,
+      servers: globalResults.byCategory.servers?.length || 0,
+      clients: globalResults.byCategory.clients?.length || 0,
+      apps: globalResults.byCategory.apps?.length || 0,
+      vpns: (globalResults.byCategory.vpn_ip?.filter((i) => i._type === 'vpn') || []).length,
+      ips: (globalResults.byCategory.vpn_ip?.filter((i) => i._type === 'ip') || []).length,
+      global: globalResults.total,
+    };
+  }, [stats, searchQuery, globalResults]);
+
+  // Filter items based on searchQuery and activeTab
   const currentItems = () => {
+    if (activeTab === 'global') {
+      return globalResults.all;
+    }
     let list = [];
     if (activeTab === 'vpn_ip') {
       list = [...data.vpns.map((v) => ({ ...v, _type: 'vpn' })), ...data.ips.map((i) => ({ ...i, _type: 'ip' }))];
@@ -214,13 +358,19 @@ export default function App() {
     if (!searchQuery.trim()) return list;
 
     const q = searchQuery.toLowerCase();
-    return list.filter((item) => {
-      const rowString = JSON.stringify(item).toLowerCase();
-      return rowString.includes(q);
-    });
+    return list.filter((item) => matchesSearch(item, q));
+  };
+
+  const handleSelectGlobalItem = (item) => {
+    setActiveTab(item._category || 'interfaces');
+  };
+
+  const handleViewAllGlobalResults = () => {
+    setActiveTab('global');
   };
 
   const titles = {
+    global: searchQuery ? `Pencarian Global: "${searchQuery}"` : 'Pencarian Global',
     interfaces: 'PC Interface Laboratorium',
     servers: 'Server Utama & SSH',
     clients: 'PC Client & Dokter',
@@ -250,7 +400,7 @@ export default function App() {
           setActiveTab(t);
           setMobileSidebarOpen(false);
         }}
-        counts={stats}
+        counts={sidebarCounts}
         isCollapsed={sidebarCollapsed}
         setIsCollapsed={setSidebarCollapsed}
         isLocked={sidebarLocked}
@@ -267,7 +417,7 @@ export default function App() {
               setActiveTab(t);
               setMobileSidebarOpen(false);
             }}
-            counts={stats}
+            counts={sidebarCounts}
             isMobile={true}
             className="w-72 h-full shadow-2xl animate-in slide-in-from-left"
           />
@@ -294,10 +444,14 @@ export default function App() {
           setIsDarkMode={setIsDarkMode}
           isSidebarCollapsed={sidebarCollapsed}
           onToggleSidebar={() => setSidebarCollapsed(!sidebarCollapsed)}
+          globalResults={globalResults}
+          onSelectGlobalItem={handleSelectGlobalItem}
+          onViewAllGlobalResults={handleViewAllGlobalResults}
+          onLaunchRemote={handleLaunchRemote}
         />
 
         <main className="flex-1 space-y-4 p-4 lg:p-6 overflow-y-auto">
-          {/* KPI Stat Cards */}
+          {/* KPI Stat Cards (hide or show when on global search) */}
           <KpiCards
             counts={stats}
             activeTab={activeTab}
@@ -308,7 +462,13 @@ export default function App() {
           <DataTable
             activeTab={activeTab}
             items={itemsToDisplay}
-            totalCount={activeTab === 'vpn_ip' ? stats.vpns + stats.ips : stats[activeTab] || 0}
+            totalCount={
+              activeTab === 'global'
+                ? globalResults.total
+                : activeTab === 'vpn_ip'
+                ? stats.vpns + stats.ips
+                : stats[activeTab] || 0
+            }
             onCopy={copyToClipboard}
             onOpenNote={handleOpenNote}
             onEdit={handleEdit}
@@ -325,7 +485,7 @@ export default function App() {
           setAddModalOpen(open);
           if (!open) setEditingItem(null);
         }}
-        activeTab={activeTab}
+        activeTab={editingItem?._category || (activeTab === 'global' ? 'interfaces' : activeTab)}
         editingItem={editingItem}
         onSave={handleSaveData}
       />
