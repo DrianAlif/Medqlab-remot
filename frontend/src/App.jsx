@@ -50,6 +50,23 @@ export default function App() {
     return localStorage.getItem('theme') === 'dark';
   });
 
+  // Sidebar Collapse & Lock states (Desktop)
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
+    return localStorage.getItem('medqlab_sidebar_collapsed') === 'true';
+  });
+  const [sidebarLocked, setSidebarLocked] = useState(() => {
+    const saved = localStorage.getItem('medqlab_sidebar_locked');
+    return saved === null ? true : saved === 'true';
+  });
+
+  useEffect(() => {
+    localStorage.setItem('medqlab_sidebar_collapsed', sidebarCollapsed ? 'true' : 'false');
+  }, [sidebarCollapsed]);
+
+  useEffect(() => {
+    localStorage.setItem('medqlab_sidebar_locked', sidebarLocked ? 'true' : 'false');
+  }, [sidebarLocked]);
+
   useEffect(() => {
     if (isDarkMode) {
       document.documentElement.classList.add('dark');
@@ -227,15 +244,25 @@ export default function App() {
       <Toaster position="top-right" richColors />
 
       {/* Sidebar for Desktop */}
-      <Sidebar
-        activeTab={activeTab}
-        setActiveTab={(t) => {
-          setActiveTab(t);
-          setMobileSidebarOpen(false);
-        }}
-        counts={stats}
-        className="hidden md:flex w-64 shrink-0 sticky top-0 h-screen"
-      />
+      <div className={`hidden md:block relative shrink-0 transition-all duration-300 ease-in-out ${sidebarCollapsed ? 'w-16' : 'w-64'}`}>
+        <Sidebar
+          activeTab={activeTab}
+          setActiveTab={(t) => {
+            setActiveTab(t);
+            setMobileSidebarOpen(false);
+          }}
+          counts={stats}
+          isCollapsed={sidebarCollapsed}
+          setIsCollapsed={setSidebarCollapsed}
+          isLocked={sidebarLocked}
+          setIsLocked={setSidebarLocked}
+          className={`h-screen sticky top-0 transition-all duration-300 ease-in-out ${
+            sidebarCollapsed
+              ? (!sidebarLocked ? 'hover:w-64 hover:shadow-2xl hover:z-50 w-16' : 'w-16')
+              : 'w-64'
+          }`}
+        />
+      </div>
 
       {/* Mobile Drawer Sidebar */}
       {mobileSidebarOpen && (
@@ -247,6 +274,7 @@ export default function App() {
               setMobileSidebarOpen(false);
             }}
             counts={stats}
+            isMobile={true}
             className="w-72 h-full shadow-2xl animate-in slide-in-from-left"
           />
           <div className="flex-1" onClick={() => setMobileSidebarOpen(false)} />
@@ -256,9 +284,9 @@ export default function App() {
       {/* Main Container */}
       <div className="flex flex-col flex-1 min-w-0">
         <Header
-            user={user}
-            onLogout={handleLogout}
-            searchQuery={searchQuery}
+          user={user}
+          onLogout={handleLogout}
+          searchQuery={searchQuery}
           setSearchQuery={setSearchQuery}
           onOpenAddModal={() => {
             setEditingItem(null);
@@ -270,6 +298,8 @@ export default function App() {
           setMobileSidebarOpen={setMobileSidebarOpen}
           isDarkMode={isDarkMode}
           setIsDarkMode={setIsDarkMode}
+          isSidebarCollapsed={sidebarCollapsed}
+          onToggleSidebar={() => setSidebarCollapsed(!sidebarCollapsed)}
         />
 
         <main className="flex-1 space-y-4 p-4 lg:p-6 overflow-y-auto">

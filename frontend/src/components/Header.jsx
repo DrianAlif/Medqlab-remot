@@ -1,5 +1,5 @@
 import React from 'react';
-import { Search, Plus, Server, Menu, X, Sun, Moon, LogOut } from 'lucide-react';
+import { Search, Plus, Server, Menu, X, Sun, Moon, LogOut, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -15,7 +15,9 @@ export function Header({
   isDarkMode,
   setIsDarkMode,
   user,
-  onLogout
+  onLogout,
+  isSidebarCollapsed,
+  onToggleSidebar
 }) {
   return (
     <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-border bg-card px-4 lg:h-[60px] lg:px-6">
@@ -27,6 +29,17 @@ export function Header({
         onClick={() => setMobileSidebarOpen(!mobileSidebarOpen)}
       >
         {mobileSidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+      </Button>
+
+      {/* Desktop sidebar toggle button */}
+      <Button
+        variant="ghost"
+        size="icon"
+        className="hidden md:flex text-muted-foreground hover:text-foreground h-9 w-9"
+        onClick={onToggleSidebar}
+        title={isSidebarCollapsed ? "Tampilkan / Perlebar Sidebar (>>)" : "Sembunyikan / Perkecil Sidebar (<<)"}
+      >
+        {isSidebarCollapsed ? <PanelLeftOpen className="h-4 w-4 text-blue-600 dark:text-blue-400" /> : <PanelLeftClose className="h-4 w-4" />}
       </Button>
 
       {/* Title info */}
