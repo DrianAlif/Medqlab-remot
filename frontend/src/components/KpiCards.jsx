@@ -43,7 +43,7 @@ export function KpiCards({ counts, activeTab, setActiveTab }) {
 
   return (
     <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-      {cards.map((card) => {
+      {cards.map((card, index) => {
         const Icon = card.icon;
         const isActive = activeTab === card.id;
         return (
@@ -51,6 +51,8 @@ export function KpiCards({ counts, activeTab, setActiveTab }) {
             key={card.id}
             onClick={() => setActiveTab(card.id)}
             className={`cursor-pointer transition-all hover:border-foreground/20 ${
+              index === 4 ? 'col-span-2 sm:col-span-1' : ''
+            } ${
               isActive ? 'border-primary ring-1 ring-primary/20 bg-muted/30' : 'bg-card'
             }`}
           >

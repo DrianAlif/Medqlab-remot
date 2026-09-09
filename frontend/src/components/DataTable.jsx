@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { toast } from 'sonner';
 import {
   MoreHorizontal,
@@ -14,6 +14,10 @@ import {
   Terminal,
   Monitor,
   ArrowRightLeft,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
 } from 'lucide-react';
 import {
   Table,
@@ -62,6 +66,12 @@ export function DataTable({
 }) {
   const [revealedPasswords, setRevealedPasswords] = useState({});
   const [globalCategoryFilter, setGlobalCategoryFilter] = useState('all');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeTab, globalCategoryFilter, items.length]);
 
   const togglePass = (key) => {
     setRevealedPasswords((prev) => ({ ...prev, [key]: !prev[key] }));
@@ -342,6 +352,22 @@ export function DataTable({
     ? (globalCategoryFilter === 'all' ? items : items.filter((i) => i._category === globalCategoryFilter))
     : items;
 
+  const currentList = activeTab === 'global' ? displayedGlobalItems : items;
+  const totalItemsCount = currentList.length;
+
+  const totalPages = pageSize === 'all'
+    ? 1
+    : Math.max(1, Math.ceil(totalItemsCount / Number(pageSize)));
+
+  const safePage = Math.min(Math.max(1, currentPage), totalPages);
+
+  const paginatedItems = useMemo(() => {
+    if (pageSize === 'all') return currentList;
+    const size = Number(pageSize);
+    const start = (safePage - 1) * size;
+    return currentList.slice(start, start + size);
+  }, [currentList, safePage, pageSize]);
+
   return (
     <>
       <Card className="shadow-sm border-border bg-card">
@@ -351,7 +377,14 @@ export function DataTable({
             {activeTab === 'global' ? 'Hasil Pencarian Global' : 'Daftar Data'}
           </CardTitle>
           <CardDescription className="text-xs">
-            Menampilkan {activeTab === 'global' ? displayedGlobalItems.length : items.length} dari {totalCount} data
+            Menampilkan{' '}
+            {totalItemsCount === 0
+              ? '0'
+              : pageSize === 'all'
+              ? `1 - ${totalItemsCount}`
+              : `${(safePage - 1) * Number(pageSize) + 1} - ${Math.min(safePage * Number(pageSize), totalItemsCount)}`}{' '}
+            dari {totalItemsCount} data
+            {totalCount > totalItemsCount && ` (difilter dari ${totalCount} total)`}
           </CardDescription>
         </div>
       </CardHeader>
@@ -403,7 +436,7 @@ export function DataTable({
           <div className="overflow-x-auto">
             {/* 0. GLOBAL SEARCH RESULTS TABLE (OPSI 1) */}
             {activeTab === 'global' && (
-              <Table>
+              <Table className="min-w-[850px]">
                 <TableHeader>
                   <TableRow>
                     <TableHead className="w-64">Kategori & Nama / Site</TableHead>
@@ -416,7 +449,7 @@ export function DataTable({
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {displayedGlobalItems.map((item) => (
+                  {paginatedItems.map((item) => (
                     <TableRow key={item.id + '_' + (item._category || '')}>
                       {/* 1. Kategori & Nama / Site */}
                       <TableCell>
@@ -665,7 +698,7 @@ export function DataTable({
 
             {/* 1. INTERFACES TABLE */}
             {activeTab === 'interfaces' && (
-              <Table>
+              <Table className="min-w-[900px]">
                 <TableHeader>
                   <TableRow>
                     <TableHead className="w-64">Nama Site & RS</TableHead>
@@ -679,7 +712,7 @@ export function DataTable({
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {items.map((site) => (
+                  {paginatedItems.map((site) => (
                     <TableRow key={site.id}>
                       <TableCell>
                         <div className="font-medium text-foreground text-xs">{site.name}</div>
@@ -862,7 +895,7 @@ export function DataTable({
 
             {/* 2. SERVERS TABLE */}
             {activeTab === 'servers' && (
-              <Table>
+              <Table className="min-w-[850px]">
                 <TableHeader>
                   <TableRow>
                     <TableHead className="w-64">Nama Server</TableHead>
@@ -875,7 +908,7 @@ export function DataTable({
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {items.map((srv) => (
+                  {paginatedItems.map((srv) => (
                     <TableRow key={srv.id}>
                       <TableCell className="font-medium text-foreground text-xs">{srv.name}</TableCell>
                       <TableCell>
@@ -1067,7 +1100,7 @@ export function DataTable({
 
             {/* 3. CLIENTS TABLE */}
             {activeTab === 'clients' && (
-              <Table>
+              <Table className="min-w-[850px]">
                 <TableHeader>
                   <TableRow>
                     <TableHead className="w-80">Nama PC & Rumah Sakit</TableHead>
@@ -1079,7 +1112,7 @@ export function DataTable({
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {items.map((cli) => (
+                  {paginatedItems.map((cli) => (
                     <TableRow key={cli.id}>
                       <TableCell>
                         <div className="font-medium text-foreground text-xs">{cli.name}</div>
@@ -1246,7 +1279,7 @@ export function DataTable({
             {/* 4. APPS CARDS GRID */}
             {activeTab === 'apps' && (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4 lg:p-6">
-                {items.map((app) => (
+                {paginatedItems.map((app) => (
                   <div
                     key={app.id}
                     className="rounded-xl border border-border bg-card p-4 space-y-3 flex flex-col justify-between"
@@ -1384,7 +1417,7 @@ export function DataTable({
                   <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
                     <Monitor className="h-3.5 w-3.5" /> Daftar Pemetaan IP Komputer RS
                   </h4>
-                  <Table>
+                  <Table className="min-w-[650px]">
                     <TableHeader>
                       <TableRow>
                         <TableHead>Rumah Sakit</TableHead>
@@ -1433,6 +1466,101 @@ export function DataTable({
           </div>
         )}
       </CardContent>
+
+      {/* Pagination Footer */}
+      {activeTab !== 'vpn_ip' && totalItemsCount > 0 && (
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-4 py-3 border-t border-border bg-card/60 text-xs text-muted-foreground select-none">
+          {/* Info & Rows per page */}
+          <div className="flex items-center gap-3 flex-wrap justify-center sm:justify-start">
+            <span>
+              Menampilkan{' '}
+              <strong className="text-foreground font-semibold">
+                {pageSize === 'all'
+                  ? `1 - ${totalItemsCount}`
+                  : `${(safePage - 1) * Number(pageSize) + 1} - ${Math.min(safePage * Number(pageSize), totalItemsCount)}`}
+              </strong>{' '}
+              dari <strong className="text-foreground font-semibold">{totalItemsCount}</strong> data
+            </span>
+            <div className="flex items-center gap-1.5">
+              <span className="text-muted-foreground">Baris:</span>
+              <select
+                value={pageSize}
+                onChange={(e) => {
+                  const val = e.target.value === 'all' ? 'all' : Number(e.target.value);
+                  setPageSize(val);
+                  setCurrentPage(1);
+                }}
+                className="h-8 rounded-md border border-border bg-background px-2 text-xs font-medium text-foreground focus:outline-none focus:ring-1 focus:ring-primary cursor-pointer shadow-2xs"
+              >
+                <option value={25}>25</option>
+                <option value={50}>50</option>
+                <option value={100}>100</option>
+                <option value="all">Semua ({totalItemsCount})</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Navigation Buttons */}
+          {totalPages > 1 && (
+            <div className="flex items-center gap-1">
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                className="h-8 w-8 cursor-pointer"
+                disabled={safePage <= 1}
+                onClick={() => setCurrentPage(1)}
+                title="Halaman Pertama"
+              >
+                <ChevronsLeft className="h-4 w-4" />
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                className="h-8 w-8 cursor-pointer"
+                disabled={safePage <= 1}
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                title="Halaman Sebelumnya"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+
+              <div className="flex items-center gap-1 px-2 text-xs font-medium text-foreground">
+                <span>Hal</span>
+                <span className="font-bold text-primary px-1.5 py-0.5 rounded bg-primary/10 border border-primary/20 font-mono">
+                  {safePage}
+                </span>
+                <span>/</span>
+                <span className="font-semibold font-mono">{totalPages}</span>
+              </div>
+
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                className="h-8 w-8 cursor-pointer"
+                disabled={safePage >= totalPages}
+                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                title="Halaman Berikutnya"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                className="h-8 w-8 cursor-pointer"
+                disabled={safePage >= totalPages}
+                onClick={() => setCurrentPage(totalPages)}
+                title="Halaman Terakhir"
+              >
+                <ChevronsRight className="h-4 w-4" />
+              </Button>
+            </div>
+          )}
+        </div>
+      )}
     </Card>
 
     {/* Quick Switch RustDesk Server Dialog */}

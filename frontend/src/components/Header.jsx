@@ -278,9 +278,10 @@ export function Header({
           size="sm"
           onClick={onOpenAddModal}
           className="h-9 gap-1.5"
+          title="Tambah Data"
         >
           <Plus className="h-4 w-4" />
-          <span>Tambah Data</span>
+          <span className="hidden sm:inline">Tambah Data</span>
         </Button>
 
         {/* User Info & Logout Button */}

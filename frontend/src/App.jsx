@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useDeferredValue } from 'react';
 import { Sidebar } from '@/components/Sidebar';
 import { Header } from '@/components/Header';
 import { KpiCards } from '@/components/KpiCards';
@@ -298,9 +298,12 @@ export default function App() {
     return fields.some((f) => f && String(f).toLowerCase().includes(qLower));
   };
 
+  // Defer heavy search computation to keep typing completely non-blocking
+  const deferredSearchQuery = useDeferredValue(searchQuery);
+
   const globalResults = useMemo(() => {
-    if (!searchQuery.trim()) return { all: [], byCategory: {}, total: 0 };
-    const q = searchQuery.toLowerCase().trim();
+    if (!deferredSearchQuery.trim()) return { all: [], byCategory: {}, total: 0 };
+    const q = deferredSearchQuery.toLowerCase().trim();
 
     const filterList = (list, categoryKey, categoryLabel) =>
       (list || [])
@@ -328,10 +331,10 @@ export default function App() {
       },
       total: all.length,
     };
-  }, [data, searchQuery]);
+  }, [data, deferredSearchQuery]);
 
   const sidebarCounts = useMemo(() => {
-    if (!searchQuery.trim()) return stats;
+    if (!deferredSearchQuery.trim()) return stats;
     return {
       interfaces: globalResults.byCategory.interfaces?.length || 0,
       servers: globalResults.byCategory.servers?.length || 0,
@@ -341,7 +344,7 @@ export default function App() {
       ips: (globalResults.byCategory.vpn_ip?.filter((i) => i._type === 'ip') || []).length,
       global: globalResults.total,
     };
-  }, [stats, searchQuery, globalResults]);
+  }, [stats, deferredSearchQuery, globalResults]);
 
   // Filter items based on searchQuery and activeTab
   const currentItems = () => {
@@ -355,9 +358,9 @@ export default function App() {
       list = data[activeTab] || [];
     }
 
-    if (!searchQuery.trim()) return list;
+    if (!deferredSearchQuery.trim()) return list;
 
-    const q = searchQuery.toLowerCase();
+    const q = deferredSearchQuery.toLowerCase();
     return list.filter((item) => matchesSearch(item, q));
   };
 
@@ -419,6 +422,7 @@ export default function App() {
             }}
             counts={sidebarCounts}
             isMobile={true}
+            onCloseMobile={() => setMobileSidebarOpen(false)}
             className="w-72 h-full shadow-2xl animate-in slide-in-from-left"
           />
           <div className="flex-1" onClick={() => setMobileSidebarOpen(false)} />

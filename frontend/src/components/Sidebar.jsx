@@ -10,7 +10,8 @@ import {
   ChevronsRight,
   Lock,
   Unlock,
-  Search
+  Search,
+  X
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -23,7 +24,8 @@ export function Sidebar({
   setIsCollapsed,
   isLocked = true,
   setIsLocked,
-  isMobile = false
+  isMobile = false,
+  onCloseMobile
 }) {
   const menuItems = [
     ...(counts.global !== undefined || activeTab === 'global'
@@ -99,7 +101,16 @@ export function Sidebar({
         </div>
 
         {/* Action Buttons */}
-        {!isMobile && (
+        {isMobile ? (
+          <button
+            type="button"
+            onClick={onCloseMobile}
+            title="Tutup Menu"
+            className="h-8 w-8 rounded-lg border border-border bg-muted/60 hover:bg-muted text-muted-foreground hover:text-foreground flex items-center justify-center transition-all cursor-pointer active:scale-90"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        ) : (
           <div className="flex items-center gap-1 shrink-0">
             <button
               type="button"
