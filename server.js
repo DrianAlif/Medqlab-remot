@@ -446,6 +446,45 @@ app.get('/api/config', (req, res) => {
   res.json({ success: true, data: getConfig() });
 });
 
+// ------------------------------------------------------------------
+// APP LAUNCHER API (Local Desktop Integration)
+// ------------------------------------------------------------------
+app.post('/api/launch', (req, res) => {
+  const { type, id } = req.body || {};
+  if (!id) {
+    return res.status(400).json({ success: false, message: 'ID remote wajib diisi' });
+  }
+
+  const cleanId = String(id).replace(/\s+/g, '');
+  const { exec } = require('child_process');
+
+  if (type === 'rustdesk') {
+    const localRustDesk = path.join(process.env.LOCALAPPDATA || '', 'rustdesk', 'rustdesk.exe');
+    const cmd = fs.existsSync(localRustDesk)
+      ? `start "" "${localRustDesk}" --connect ${cleanId}`
+      : `start rustdesk://${cleanId}`;
+
+    exec(cmd, (err) => {
+      if (err) console.error('Gagal menjalankan RustDesk:', err);
+    });
+    return res.json({ success: true, message: `RustDesk diluncurkan untuk ID ${id}` });
+  }
+
+  if (type === 'anydesk') {
+    const anydeskPath = 'C:\\Program Files (x86)\\AnyDesk\\AnyDesk.exe';
+    const cmd = fs.existsSync(anydeskPath)
+      ? `start "" "${anydeskPath}" ${cleanId}`
+      : `start anydesk:${cleanId}`;
+
+    exec(cmd, (err) => {
+      if (err) console.error('Gagal menjalankan AnyDesk:', err);
+    });
+    return res.json({ success: true, message: `AnyDesk diluncurkan untuk ID ${id}` });
+  }
+
+  return res.status(400).json({ success: false, message: 'Tipe remote tidak valid' });
+});
+
 // Fallback to index.html
 app.use((req, res) => {
   res.sendFile(path.join(STATIC_DIR, 'index.html'));

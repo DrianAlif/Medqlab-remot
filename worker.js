@@ -106,6 +106,11 @@ export default {
         }
       }
 
+      // LAUNCH APP (Cloudflare edge responder, actual launch handled by browser URL scheme)
+      if (pathname === '/api/launch' && method === 'POST') {
+        return jsonResponse({ success: true, message: 'Launcher handled via browser protocol' });
+      }
+
       // 3. INTERFACES
       if (pathname === '/api/interfaces' || pathname === '/api/sites') {
         if (method === 'GET') {

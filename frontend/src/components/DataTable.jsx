@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { toast } from 'sonner';
 import {
   MoreHorizontal,
   Copy,
@@ -51,6 +52,47 @@ export function DataTable({
 
   const togglePass = (key) => {
     setRevealedPasswords((prev) => ({ ...prev, [key]: !prev[key] }));
+  };
+
+  const handleLaunch = async (type, rawId, password) => {
+    if (!rawId) return;
+    const cleanId = String(rawId).replace(/\s+/g, '');
+    const appName = type === 'rustdesk' ? 'RustDesk' : 'AnyDesk';
+
+    // 1. Salin password secara otomatis ke clipboard jika ada
+    if (password) {
+      try {
+        await navigator.clipboard.writeText(password);
+        toast.success(
+          `Membuka ${appName} (${rawId}) — Password otomatis disalin ke clipboard!`,
+          { duration: 4000 }
+        );
+      } catch (err) {
+        toast.info(`Membuka ${appName} (${rawId})...`);
+      }
+    } else {
+      toast.info(`Membuka ${appName} (${rawId})...`);
+    }
+
+    // 2. Kirim sinyal ke API backend lokal (start.bat / node server.js)
+    try {
+      fetch('/api/launch', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type, id: cleanId, password }),
+      }).catch(() => {});
+    } catch (e) {}
+
+    // 3. Panggil Browser Protocol Scheme (Deep Link)
+    const uri = type === 'rustdesk' ? `rustdesk://${cleanId}` : `anydesk:${cleanId}`;
+    const link = document.createElement('a');
+    link.href = uri;
+    link.style.display = 'none';
+    document.body.appendChild(link);
+    link.click();
+    setTimeout(() => {
+      if (link.parentNode) link.parentNode.removeChild(link);
+    }, 1000);
   };
 
   const getOsBadge = (os) => {
@@ -202,7 +244,7 @@ export function DataTable({
                         {site.rustdeskId ? (
                           <div className="flex flex-col gap-1.5 py-0.5">
                             {/* Baris 1: ID Utama (Font lebih besar & tebal) */}
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-1.5">
                               <span className="font-mono text-sm font-bold tracking-wide text-foreground">
                                 {site.rustdeskId}
                               </span>
@@ -210,9 +252,20 @@ export function DataTable({
                                 variant="ghost"
                                 size="icon"
                                 className="h-6 w-6 text-muted-foreground hover:text-foreground"
+                                title="Salin ID"
                                 onClick={() => onCopy(site.rustdeskId, 'Rustdesk ID')}
                               >
                                 <Copy className="h-3.5 w-3.5" />
+                              </Button>
+                              <Button
+                                variant="secondary"
+                                size="sm"
+                                className="h-6 px-1.5 text-[10px] font-medium gap-1 text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/60 hover:bg-blue-100 dark:hover:bg-blue-900 border border-blue-200 dark:border-blue-800 shadow-none"
+                                title="Buka langsung di aplikasi RustDesk (Password otomatis disalin)"
+                                onClick={() => handleLaunch('rustdesk', site.rustdeskId, site.rustdeskPass)}
+                              >
+                                <ExternalLink className="h-3 w-3" />
+                                Buka
                               </Button>
                             </div>
                             {/* Baris 2: Password (Data utama, font jelas) */}
@@ -251,7 +304,7 @@ export function DataTable({
                         {site.anydeskId ? (
                           <div className="flex flex-col gap-1.5 py-0.5">
                             {/* Baris 1: AnyDesk ID Utama */}
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-1.5">
                               <span className="font-mono text-sm font-bold tracking-wide text-foreground">
                                 {site.anydeskId}
                               </span>
@@ -259,9 +312,20 @@ export function DataTable({
                                 variant="ghost"
                                 size="icon"
                                 className="h-6 w-6 text-muted-foreground hover:text-foreground"
+                                title="Salin ID"
                                 onClick={() => onCopy(site.anydeskId, 'AnyDesk ID')}
                               >
                                 <Copy className="h-3.5 w-3.5" />
+                              </Button>
+                              <Button
+                                variant="secondary"
+                                size="sm"
+                                className="h-6 px-1.5 text-[10px] font-medium gap-1 text-rose-700 dark:text-rose-300 bg-rose-50 dark:bg-rose-950/60 hover:bg-rose-100 dark:hover:bg-rose-900 border border-rose-200 dark:border-rose-800 shadow-none"
+                                title="Buka langsung di aplikasi AnyDesk (Password otomatis disalin)"
+                                onClick={() => handleLaunch('anydesk', site.anydeskId, site.anydeskPass)}
+                              >
+                                <ExternalLink className="h-3 w-3" />
+                                Buka
                               </Button>
                             </div>
                             {/* Baris 2: AnyDesk Pass */}
@@ -417,7 +481,7 @@ export function DataTable({
                         {srv.rustdeskId ? (
                           <div className="flex flex-col gap-1.5 py-0.5">
                             {/* Baris 1: ID Utama */}
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-1.5">
                               <span className="font-mono text-sm font-bold tracking-wide text-foreground">
                                 {srv.rustdeskId}
                               </span>
@@ -425,9 +489,20 @@ export function DataTable({
                                 variant="ghost"
                                 size="icon"
                                 className="h-6 w-6 text-muted-foreground hover:text-foreground"
+                                title="Salin ID"
                                 onClick={() => onCopy(srv.rustdeskId, 'Rustdesk ID')}
                               >
                                 <Copy className="h-3.5 w-3.5" />
+                              </Button>
+                              <Button
+                                variant="secondary"
+                                size="sm"
+                                className="h-6 px-1.5 text-[10px] font-medium gap-1 text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/60 hover:bg-blue-100 dark:hover:bg-blue-900 border border-blue-200 dark:border-blue-800 shadow-none"
+                                title="Buka langsung di aplikasi RustDesk (Password otomatis disalin)"
+                                onClick={() => handleLaunch('rustdesk', srv.rustdeskId, srv.rustdeskPass)}
+                              >
+                                <ExternalLink className="h-3 w-3" />
+                                Buka
                               </Button>
                             </div>
                             {/* Baris 2: Password */}
@@ -471,9 +546,20 @@ export function DataTable({
                                 variant="ghost"
                                 size="icon"
                                 className="h-5 w-5 text-muted-foreground hover:text-foreground"
+                                title="Salin ID"
                                 onClick={() => onCopy(srv.anydeskId, 'AnyDesk ID')}
                               >
                                 <Copy className="h-3 w-3" />
+                              </Button>
+                              <Button
+                                variant="secondary"
+                                size="sm"
+                                className="h-5 px-1.5 text-[10px] font-medium gap-1 text-rose-700 dark:text-rose-300 bg-rose-50 dark:bg-rose-950/60 hover:bg-rose-100 dark:hover:bg-rose-900 border border-rose-200 dark:border-rose-800 shadow-none"
+                                title="Buka langsung di aplikasi AnyDesk (Password otomatis disalin)"
+                                onClick={() => handleLaunch('anydesk', srv.anydeskId, srv.anydeskPass)}
+                              >
+                                <ExternalLink className="h-2.5 w-2.5" />
+                                Buka
                               </Button>
                             </div>
                             {srv.anydeskPass && (
@@ -557,7 +643,7 @@ export function DataTable({
                       <TableCell>
                         {cli.anydeskId ? (
                           <div className="flex flex-col gap-1.5 py-0.5">
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-1.5">
                               <span className="font-mono text-sm font-bold tracking-wide text-foreground">
                                 {cli.anydeskId}
                               </span>
@@ -565,9 +651,20 @@ export function DataTable({
                                 variant="ghost"
                                 size="icon"
                                 className="h-6 w-6 text-muted-foreground hover:text-foreground"
+                                title="Salin ID"
                                 onClick={() => onCopy(cli.anydeskId, 'AnyDesk ID')}
                               >
                                 <Copy className="h-3.5 w-3.5" />
+                              </Button>
+                              <Button
+                                variant="secondary"
+                                size="sm"
+                                className="h-6 px-1.5 text-[10px] font-medium gap-1 text-rose-700 dark:text-rose-300 bg-rose-50 dark:bg-rose-950/60 hover:bg-rose-100 dark:hover:bg-rose-900 border border-rose-200 dark:border-rose-800 shadow-none"
+                                title="Buka langsung di aplikasi AnyDesk (Password otomatis disalin)"
+                                onClick={() => handleLaunch('anydesk', cli.anydeskId, cli.anydeskPass)}
+                              >
+                                <ExternalLink className="h-3 w-3" />
+                                Buka
                               </Button>
                             </div>
                             {cli.anydeskPass ? (
@@ -603,7 +700,7 @@ export function DataTable({
                         {cli.rustdeskId ? (
                           <div className="flex flex-col gap-1.5 py-0.5">
                             {/* Baris 1: ID Utama */}
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-1.5">
                               <span className="font-mono text-sm font-bold tracking-wide text-foreground">
                                 {cli.rustdeskId}
                               </span>
@@ -611,9 +708,20 @@ export function DataTable({
                                 variant="ghost"
                                 size="icon"
                                 className="h-6 w-6 text-muted-foreground hover:text-foreground"
+                                title="Salin ID"
                                 onClick={() => onCopy(cli.rustdeskId, 'Rustdesk ID')}
                               >
                                 <Copy className="h-3.5 w-3.5" />
+                              </Button>
+                              <Button
+                                variant="secondary"
+                                size="sm"
+                                className="h-6 px-1.5 text-[10px] font-medium gap-1 text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/60 hover:bg-blue-100 dark:hover:bg-blue-900 border border-blue-200 dark:border-blue-800 shadow-none"
+                                title="Buka langsung di aplikasi RustDesk (Password otomatis disalin)"
+                                onClick={() => handleLaunch('rustdesk', cli.rustdeskId, cli.rustdeskPass, cli.rustdeskServer)}
+                              >
+                                <ExternalLink className="h-3 w-3" />
+                                Buka
                               </Button>
                             </div>
                             {/* Baris 2: Password */}
