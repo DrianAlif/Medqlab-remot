@@ -13,6 +13,7 @@ import {
   Database,
   Terminal,
   Monitor,
+  ArrowRightLeft,
 } from 'lucide-react';
 import {
   Table,
@@ -32,6 +33,16 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogDescription,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
   DropdownMenu,
   DropdownMenuTrigger,
   DropdownMenuContent,
@@ -47,11 +58,74 @@ export function DataTable({
   onOpenNote,
   onEdit,
   onDelete,
+  onQuickSwitchServer,
 }) {
   const [revealedPasswords, setRevealedPasswords] = useState({});
 
   const togglePass = (key) => {
     setRevealedPasswords((prev) => ({ ...prev, [key]: !prev[key] }));
+  };
+
+  const [switchDialog, setSwitchDialog] = useState({
+    open: false,
+    item: null,
+    newServer: 'Biznet',
+    newId: '',
+    newPass: '',
+  });
+
+  const openSwitchServer = (item, targetServer = 'Biznet') => {
+    setSwitchDialog({
+      open: true,
+      item,
+      newServer: targetServer,
+      newId: item.rustdeskId || '',
+      newPass: item.rustdeskPass || '',
+    });
+  };
+
+  const handleConfirmSwitch = async (e) => {
+    e?.preventDefault?.();
+    const { item, newServer, newId, newPass } = switchDialog;
+    if (!item) return;
+
+    let notes = item.notes || '';
+    if (newServer === 'Biznet') {
+      notes = notes.replace(/\[Rustdesk:\s*Server Digital Ocean\]/gi, '[Rustdesk: Server Biznet]');
+      if (!notes.includes('[Rustdesk: Server Biznet]')) {
+        notes = notes ? `[Rustdesk: Server Biznet]\n${notes}` : '[Rustdesk: Server Biznet]';
+      }
+    } else if (newServer === 'Digital Ocean') {
+      notes = notes.replace(/\[Rustdesk:\s*Server Biznet\]/gi, '[Rustdesk: Server Digital Ocean]');
+      if (!notes.includes('[Rustdesk: Server Digital Ocean]')) {
+        notes = notes ? `[Rustdesk: Server Digital Ocean]\n${notes}` : '[Rustdesk: Server Digital Ocean]';
+      }
+    }
+
+    const updated = {
+      ...item,
+      rustdeskServer: newServer,
+      rustdeskId: newId.trim(),
+      rustdeskPass: newPass.trim(),
+      notes,
+    };
+
+    try {
+      if (onQuickSwitchServer) {
+        await onQuickSwitchServer(activeTab, updated, item.id);
+      } else {
+        await fetch(`/api/${activeTab}/${item.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(updated),
+        });
+      }
+      toast.success(`Server RustDesk berhasil dialihkan ke ${newServer}!`);
+    } catch (err) {
+      toast.error('Gagal mengalihkan server RustDesk');
+    } finally {
+      setSwitchDialog({ open: false, item: null, newServer: 'Biznet', newId: '', newPass: '' });
+    }
   };
 
   const RUSTDESK_CONFIG = {
@@ -156,7 +230,7 @@ export function DataTable({
       const cfg = RUSTDESK_CONFIG['Biznet'];
       const previewStr = `${item.rustdeskId}@${cfg.server}?key=${cfg.key}`;
       return (
-        <div className="pt-0.5">
+        <div className="pt-0.5 flex items-center flex-wrap gap-1">
           <button
             type="button"
             onClick={(e) => copyRustdeskFullString(e, item, 'Biznet')}
@@ -168,6 +242,18 @@ export function DataTable({
             <span>Server Biznet</span>
             <Copy className="h-2.5 w-2.5 opacity-70 group-hover:opacity-100 transition-opacity ml-0.5" />
           </button>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              openSwitchServer(item, 'Digital Ocean');
+            }}
+            title="Ganti / Kelola Server RustDesk"
+            className="inline-flex items-center gap-0.5 rounded px-1 py-0.5 text-[9px] text-muted-foreground hover:text-foreground hover:bg-muted/80 border border-border transition-all cursor-pointer"
+          >
+            <ArrowRightLeft className="h-2.5 w-2.5" />
+            Ganti
+          </button>
         </div>
       );
     }
@@ -175,7 +261,7 @@ export function DataTable({
       const cfg = RUSTDESK_CONFIG['Digital Ocean'];
       const previewStr = `${item.rustdeskId}@${cfg.server}?key=${cfg.key}`;
       return (
-        <div className="pt-0.5">
+        <div className="pt-0.5 flex items-center flex-wrap gap-1">
           <button
             type="button"
             onClick={(e) => copyRustdeskFullString(e, item, 'Digital Ocean')}
@@ -187,10 +273,37 @@ export function DataTable({
             <span>Server Digital Ocean</span>
             <Copy className="h-2.5 w-2.5 opacity-60 group-hover:opacity-100 transition-opacity ml-0.5" />
           </button>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              openSwitchServer(item, 'Biznet');
+            }}
+            title="Pindahkan site ini ke Server Biznet (Baru)"
+            className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-700 hover:bg-emerald-100 dark:hover:bg-emerald-900 transition-all cursor-pointer shadow-2xs animate-pulse"
+          >
+            <ArrowRightLeft className="h-2.5 w-2.5" />
+            Ke Biznet
+          </button>
         </div>
       );
     }
-    return null;
+    return (
+      <div className="pt-0.5">
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            openSwitchServer(item, 'Biznet');
+          }}
+          title="Pilih Server Relay RustDesk"
+          className="inline-flex items-center gap-0.5 rounded px-1.5 py-0.5 text-[9px] text-muted-foreground hover:text-foreground border border-dashed border-border hover:bg-muted transition-all cursor-pointer"
+        >
+          <ArrowRightLeft className="h-2.5 w-2.5" />
+          + Set Server
+        </button>
+      </div>
+    );
   };
 
 
@@ -225,7 +338,8 @@ export function DataTable({
   };
 
   return (
-    <Card className="shadow-sm border-border bg-card">
+    <>
+      <Card className="shadow-sm border-border bg-card">
       <CardHeader className="flex flex-row items-center justify-between p-4 pb-2 lg:p-6 lg:pb-3">
         <div>
           <CardTitle className="text-base font-semibold">Daftar Data</CardTitle>
@@ -1013,5 +1127,100 @@ export function DataTable({
         )}
       </CardContent>
     </Card>
+
+    {/* Quick Switch RustDesk Server Dialog */}
+    <Dialog open={switchDialog.open} onOpenChange={(open) => setSwitchDialog((prev) => ({ ...prev, open }))}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2 text-sm">
+            <ArrowRightLeft className="h-4 w-4 text-primary" />
+            Ganti / Migrasi Server RustDesk
+          </DialogTitle>
+          <DialogDescription className="text-xs">
+            Pindahkan server koneksi untuk <strong className="text-foreground">{switchDialog.item?.name}</strong>. String koneksi dan relay server akan otomatis disesuaikan.
+          </DialogDescription>
+        </DialogHeader>
+
+        <form onSubmit={handleConfirmSwitch} className="space-y-3.5 py-2 text-xs">
+          <div className="space-y-1.5">
+            <Label>Pilih Server Tujuan</Label>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => setSwitchDialog((prev) => ({ ...prev, newServer: 'Biznet' }))}
+                className={`flex flex-col items-start p-2.5 rounded-lg border text-left transition-all cursor-pointer ${
+                  switchDialog.newServer === 'Biznet'
+                    ? 'border-blue-500 bg-blue-50/70 dark:bg-blue-950/50 text-blue-900 dark:text-blue-200 ring-1 ring-blue-500'
+                    : 'border-border hover:bg-muted/50 text-muted-foreground'
+                }`}
+              >
+                <div className="font-semibold text-xs flex items-center gap-1.5">
+                  <span className="h-2 w-2 rounded-full bg-blue-500" />
+                  Server Biznet
+                </div>
+                <span className="text-[10px] opacity-80 mt-0.5">Baru (103.125.181.20)</span>
+                <span className="text-[9px] font-medium text-emerald-600 dark:text-emerald-400 mt-1">★ Rekomendasi</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setSwitchDialog((prev) => ({ ...prev, newServer: 'Digital Ocean' }))}
+                className={`flex flex-col items-start p-2.5 rounded-lg border text-left transition-all cursor-pointer ${
+                  switchDialog.newServer === 'Digital Ocean'
+                    ? 'border-amber-500 bg-amber-50/70 dark:bg-amber-950/50 text-amber-900 dark:text-amber-200 ring-1 ring-amber-500'
+                    : 'border-border hover:bg-muted/50 text-muted-foreground'
+                }`}
+              >
+                <div className="font-semibold text-xs flex items-center gap-1.5">
+                  <span className="h-2 w-2 rounded-full bg-amber-500" />
+                  Digital Ocean
+                </div>
+                <span className="text-[10px] opacity-80 mt-0.5">Lama (188.166.222.59)</span>
+                <span className="text-[9px] font-medium text-amber-600 mt-1">Deprecated</span>
+              </button>
+            </div>
+          </div>
+
+          <div className="space-y-1">
+            <Label>RustDesk ID</Label>
+            <Input
+              value={switchDialog.newId}
+              onChange={(e) => setSwitchDialog((prev) => ({ ...prev, newId: e.target.value }))}
+              placeholder="Contoh: 123 456 789"
+              className="font-mono text-xs"
+              required
+            />
+            <p className="text-[10px] text-muted-foreground">
+              Jika saat beralih ke server Biznet ID komputer berubah, masukkan ID baru di sini.
+            </p>
+          </div>
+
+          <div className="space-y-1">
+            <Label>Password RustDesk (Opsional)</Label>
+            <Input
+              value={switchDialog.newPass}
+              onChange={(e) => setSwitchDialog((prev) => ({ ...prev, newPass: e.target.value }))}
+              placeholder="Password koneksi"
+              className="font-mono text-xs"
+            />
+          </div>
+
+          <DialogFooter className="pt-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setSwitchDialog((prev) => ({ ...prev, open: false }))}
+            >
+              Batal
+            </Button>
+            <Button type="submit" size="sm" className="bg-primary text-primary-foreground">
+              Simpan Perubahan
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  </>
   );
 }

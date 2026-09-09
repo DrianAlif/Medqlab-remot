@@ -153,6 +153,7 @@ app.post('/api/interfaces', (req, res) => {
     os: (body.os || '').trim(),
     version: (body.version || '').trim(),
     notes: (body.notes || '').trim(),
+    rustdeskServer: (body.rustdeskServer || '').trim(),
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
   };
@@ -231,6 +232,7 @@ app.post('/api/servers', (req, res) => {
     anydeskPass: (body.anydeskPass || '').trim(),
     tvId: (body.tvId || '').trim(),
     tvPass: (body.tvPass || '').trim(),
+    rustdeskServer: (body.rustdeskServer || '').trim(),
     notes: (body.notes || '').trim(),
     createdAt: new Date().toISOString()
   };
@@ -243,9 +245,14 @@ app.put('/api/servers/:id', (req, res) => {
   const items = readData('servers.json');
   const idx = items.findIndex(s => s.id === req.params.id);
   if (idx === -1) return res.status(404).json({ success: false, message: 'Server tidak ditemukan' });
-  items[idx] = { ...items[idx], ...req.body, updatedAt: new Date().toISOString() };
+
+  items[idx] = {
+    ...items[idx],
+    ...req.body,
+    updatedAt: new Date().toISOString()
+  };
   saveData('servers.json', items);
-  res.json({ success: true, message: 'Server berhasil diperbarui!', data: items[idx] });
+  res.json({ success: true, message: 'Server berhasil diperbarui', data: items[idx] });
 });
 
 app.delete('/api/servers/:id', (req, res) => {
@@ -291,6 +298,7 @@ app.post('/api/clients', (req, res) => {
     anydeskPass: (body.anydeskPass || '').trim(),
     rustdeskId: (body.rustdeskId || '').trim(),
     rustdeskPass: (body.rustdeskPass || '').trim(),
+    rustdeskServer: (body.rustdeskServer || '').trim(),
     tvId: (body.tvId || '').trim(),
     tvPass: (body.tvPass || '').trim(),
     ip: (body.ip || '').trim(),

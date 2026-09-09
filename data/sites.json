@@ -16,7 +16,7 @@
     "version": "V1 \"PLOTTWIST\" OLD",
     "notes": "[Rustdesk: Server Biznet]\\nNote Rustdesk : Ubah parameter rustdesk di Settings > Network menjadi :",
     "createdAt": "2026-09-09T06:02:38.541Z",
-    "updatedAt": "2026-09-09T09:18:35.737Z",
+    "updatedAt": "2026-09-09T11:28:25.938Z",
     "rustdeskServer": "Biznet"
   },
   {
@@ -36,7 +36,7 @@
     "version": "",
     "notes": "[Rustdesk: Server Digital Ocean]",
     "createdAt": "2026-09-09T06:02:38.543Z",
-    "updatedAt": "2026-09-09T07:37:32.245Z",
+    "updatedAt": "2026-09-09T11:27:48.792Z",
     "rustdeskServer": "Digital Ocean"
   },
   {

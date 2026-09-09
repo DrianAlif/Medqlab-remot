@@ -16,12 +16,18 @@ export function DataModal({ open, onOpenChange, activeTab, editingItem, onSave }
 
   useEffect(() => {
     if (editingItem) {
-      setFormData({ ...editingItem });
+      let server = editingItem.rustdeskServer || '';
+      if (!server) {
+        if (editingItem.notes && editingItem.notes.includes('Server Biznet')) server = 'Biznet';
+        else if (editingItem.notes && editingItem.notes.includes('Server Digital Ocean')) server = 'Digital Ocean';
+      }
+      setFormData({ ...editingItem, rustdeskServer: server });
     } else {
       // Default empty
       setFormData({
         os: 'Microsoft Windows',
         version: 'V2 LINUX',
+        rustdeskServer: 'Biznet',
       });
     }
   }, [editingItem, open]);
@@ -32,7 +38,23 @@ export function DataModal({ open, onOpenChange, activeTab, editingItem, onSave }
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSave(activeTab, formData, editingItem?.id);
+    let updated = { ...formData };
+    if (updated.rustdeskServer) {
+      let notes = updated.notes || '';
+      if (updated.rustdeskServer === 'Biznet') {
+        notes = notes.replace(/\[Rustdesk:\s*Server Digital Ocean\]/gi, '[Rustdesk: Server Biznet]');
+        if (!notes.includes('[Rustdesk: Server Biznet]')) {
+          notes = notes ? `[Rustdesk: Server Biznet]\n${notes}` : '[Rustdesk: Server Biznet]';
+        }
+      } else if (updated.rustdeskServer === 'Digital Ocean') {
+        notes = notes.replace(/\[Rustdesk:\s*Server Biznet\]/gi, '[Rustdesk: Server Digital Ocean]');
+        if (!notes.includes('[Rustdesk: Server Digital Ocean]')) {
+          notes = notes ? `[Rustdesk: Server Digital Ocean]\n${notes}` : '[Rustdesk: Server Digital Ocean]';
+        }
+      }
+      updated.notes = notes;
+    }
+    onSave(activeTab, updated, editingItem?.id);
   };
 
   const titles = {
@@ -63,10 +85,23 @@ export function DataModal({ open, onOpenChange, activeTab, editingItem, onSave }
                   <Input name="hospital" value={formData.hospital || ''} onChange={handleChange} placeholder="RSUD Banjar" />
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <div className="space-y-1">
+                  <Label>Server Relay Rustdesk</Label>
+                  <select
+                    name="rustdeskServer"
+                    value={formData.rustdeskServer || ''}
+                    onChange={handleChange}
+                    className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-xs shadow-xs transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                  >
+                    <option value="">Default (Tanpa Server Khusus)</option>
+                    <option value="Biznet">Server Biznet (Baru - 103.125.181.20)</option>
+                    <option value="Digital Ocean">Server Digital Ocean (Lama - 188.166.222.59)</option>
+                  </select>
+                </div>
                 <div className="space-y-1">
                   <Label>Rustdesk ID</Label>
-                  <Input name="rustdeskId" value={formData.rustdeskId || ''} onChange={handleChange} />
+                  <Input name="rustdeskId" value={formData.rustdeskId || ''} onChange={handleChange} placeholder="Contoh: 123 456 789" />
                 </div>
                 <div className="space-y-1">
                   <Label>Password Rustdesk</Label>
@@ -120,10 +155,23 @@ export function DataModal({ open, onOpenChange, activeTab, editingItem, onSave }
                   <Input name="passSsh" value={formData.passSsh || ''} onChange={handleChange} />
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <div className="space-y-1">
+                  <Label>Server Relay Rustdesk</Label>
+                  <select
+                    name="rustdeskServer"
+                    value={formData.rustdeskServer || ''}
+                    onChange={handleChange}
+                    className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-xs shadow-xs transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                  >
+                    <option value="">Default (Tanpa Server Khusus)</option>
+                    <option value="Biznet">Server Biznet (Baru - 103.125.181.20)</option>
+                    <option value="Digital Ocean">Server Digital Ocean (Lama - 188.166.222.59)</option>
+                  </select>
+                </div>
                 <div className="space-y-1">
                   <Label>Rustdesk ID</Label>
-                  <Input name="rustdeskId" value={formData.rustdeskId || ''} onChange={handleChange} />
+                  <Input name="rustdeskId" value={formData.rustdeskId || ''} onChange={handleChange} placeholder="Contoh: 123 456 789" />
                 </div>
                 <div className="space-y-1">
                   <Label>Password Rustdesk</Label>
@@ -169,10 +217,23 @@ export function DataModal({ open, onOpenChange, activeTab, editingItem, onSave }
                   <Input name="anydeskPass" value={formData.anydeskPass || ''} onChange={handleChange} />
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <div className="space-y-1">
+                  <Label>Server Relay Rustdesk</Label>
+                  <select
+                    name="rustdeskServer"
+                    value={formData.rustdeskServer || ''}
+                    onChange={handleChange}
+                    className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-xs shadow-xs transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                  >
+                    <option value="">Default (Tanpa Server Khusus)</option>
+                    <option value="Biznet">Server Biznet (Baru - 103.125.181.20)</option>
+                    <option value="Digital Ocean">Server Digital Ocean (Lama - 188.166.222.59)</option>
+                  </select>
+                </div>
                 <div className="space-y-1">
                   <Label>Rustdesk ID</Label>
-                  <Input name="rustdeskId" value={formData.rustdeskId || ''} onChange={handleChange} />
+                  <Input name="rustdeskId" value={formData.rustdeskId || ''} onChange={handleChange} placeholder="Contoh: 123 456 789" />
                 </div>
                 <div className="space-y-1">
                   <Label>Password Rustdesk</Label>

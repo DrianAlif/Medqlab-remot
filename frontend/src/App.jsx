@@ -289,6 +289,7 @@ export default function App() {
             onOpenNote={handleOpenNote}
             onEdit={handleEdit}
             onDelete={handleDelete}
+            onQuickSwitchServer={handleSaveData}
           />
         </main>
       </div>
